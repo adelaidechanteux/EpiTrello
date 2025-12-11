@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from django.http import Http404, JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.shortcuts import render
@@ -5,11 +7,12 @@ from django.shortcuts import render
 from myauth.middleware import require_logged
 from myboard.models import Task, Board
 
+
 # Create your views here.
 
 @require_http_methods(["GET"])
 @require_logged
-def board_id(request, board_id: str):
+def board_id(request, board_id: UUID):
     try:
         board: Board = Board.objects.get(pk=board_id)
     except Board.DoesNotExist:
@@ -61,3 +64,9 @@ def board_id(request, board_id: str):
         ],
     }
     return JsonResponse(res)
+
+
+@require_http_methods(["GET"])
+@require_logged
+def invit_board_id(request, board_id: UUID):
+    return Http404()
