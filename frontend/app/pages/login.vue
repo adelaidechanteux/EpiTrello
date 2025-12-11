@@ -20,8 +20,30 @@ const { authenticated } = storeToRefs(useAuthStore());
 const router = useRouter();
 
 // handle success event
-const handleLoginSuccess = (response: CredentialResponse) => {
+const handleLoginSuccess = async (response: CredentialResponse) => {
     const { credential } = response;
+    const login = async() => {
+        try {
+            const response = await fetch(`http://0.0.0.0:5080/user/login/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + credential
+                },
+            });
+            if (!response.ok) {
+                const errBody = await response.json();
+                throw { status: response.status, body: errBody};
+            }
+            return await response.json();
+        } catch (err) {
+            console.error('Network / fetch error login', err);
+            throw err;
+        }
+    }
+    const loginResult = await login();
+    console.log(`this is loginresult ${loginResult}`);
+
     authenticateUser(credential);
     if (authenticated) {
         router.push('/');
