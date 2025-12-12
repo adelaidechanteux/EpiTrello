@@ -20,8 +20,10 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
 from myauth import views as myauth_views
+from myboard import views as myboard_views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("user/login/", myauth_views.user_login),
+    path("board/<uuid:id>", myboard_views.board_id),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

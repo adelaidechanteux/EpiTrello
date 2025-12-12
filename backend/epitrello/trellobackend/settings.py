@@ -51,6 +51,7 @@ CSRF_TRUSTED_ORIGINS = [
 
 INSTALLED_APPS = [
     "myauth.apps.MyauthConfig",
+    "myboard.apps.MyboardConfig",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
