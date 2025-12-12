@@ -5,6 +5,9 @@
     --main-grey: #1f1f21;
     --secondary-grey: #29292c;
     --text-color: #bfc1c4;
+    --ui-primary: #1f1f21;
+    --ui-secondary: #ffffff;
+    --ui-info: #669df1;
 }
 
 body {

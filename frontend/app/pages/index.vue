@@ -1,4 +1,5 @@
 <template>
+    <TopBar></TopBar>
     <h2>INDEX</h2>
 </template>
 
