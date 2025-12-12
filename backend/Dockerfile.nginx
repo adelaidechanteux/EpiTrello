@@ -1,0 +1,19 @@
+# vi: ft=dockerfile
+FROM ghcr.io/astral-sh/uv:python3.13-trixie-slim AS builder
+
+RUN mkdir /app
+WORKDIR /app
+COPY ./pyproject.toml ./uv.lock /app
+RUN uv sync --locked
+COPY ./epitrello /app
+
+ENV PATH="/app/.venv/bin:$PATH"
+RUN ./manage.py collectstatic
+
+
+FROM docker.io/nginx:1.29-trixie
+
+RUN mkdir /app
+
+COPY ./nginx.conf /etc/nginx/nginx.conf
+COPY --from=builder /app/staticfiles /app/staticfiles
