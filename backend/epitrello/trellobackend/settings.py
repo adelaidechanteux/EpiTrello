@@ -36,10 +36,14 @@ ALLOWED_HOSTS = [
     for x in os.getenv("ALLOWED_HOSTS", "").split(";")
     if x
 ]
-
 CORS_ALLOWED_ORIGINS = [
     x
     for x in os.getenv("CORS_ALLOWED_ORIGINS", "").split(";")
+    if x
+]
+CSRF_TRUSTED_ORIGINS = [
+    x
+    for x in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(";")
     if x
 ]
 
@@ -90,26 +94,22 @@ WSGI_APPLICATION = "trellobackend.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES={}
-if ENVIRON == "production":
-    DB_PASS=os.getenv("DB_PASS")
-    DB_USER=os.getenv("DB_USER")
-    DB_PORT=os.getenv("DB_PORT")
-    DB_HOST=os.getenv("DB_HOST")
-    DATABASES["default"] = {
+DB_PASS=os.getenv("DB_PASS")
+DB_USER=os.getenv("DB_USER")
+DB_PORT=os.getenv("DB_PORT")
+DB_HOST=os.getenv("DB_HOST")
+DATABASES = {
+    "default": {
         "ENGINE": "django.db.backends.postgresql",
         "OPTIONS": {
             "password": DB_PASS,
             "port": DB_PORT,
             "user": DB_USER,
             "host": DB_HOST,
+            "service": "db",
         },
-    }
-else:
-    DATABASES["default"] = {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    },
+}
 
 
 # Password validation

@@ -18,6 +18,7 @@ RUN groupadd --system --gid 999 nonroot \
     && useradd --system --gid 999 --uid 999 --create-home nonroot
 
 COPY --from=builder --chown=nonroot:nonroot /app /app
+COPY --chown=nonroot:nonroot ./epitrello/trellobackend/.pg_service.conf /home/nonroot/
 
 ENV PATH="/app/.venv/bin:$PATH"
 
