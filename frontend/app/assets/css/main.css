@@ -1,0 +1,18 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+:root {
+    --main-grey: #1f1f21;
+    --secondary-grey: #29292c;
+    --text-color: #bfc1c4;
+}
+
+body {
+    background-color: #1f1f21;
+}
+
+h1 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-color);
+}
