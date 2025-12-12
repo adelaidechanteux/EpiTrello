@@ -11,6 +11,7 @@ COPY ./pyproject.toml ./uv.lock /app
 RUN uv sync --locked
 COPY ./epitrello /app
 
+
 FROM python:3.13-slim-trixie
 
 RUN groupadd --system --gid 999 nonroot \
@@ -24,6 +25,6 @@ USER nonroot
 
 WORKDIR /app
 
-EXPOSE 5080
+EXPOSE 5081
 
-CMD ["daphne", "-b", "0.0.0.0", "-p", "5080", "trellobackend.asgi:application"]
+CMD ["daphne", "-b", "0.0.0.0", "-p", "5081", "trellobackend.asgi:application"]

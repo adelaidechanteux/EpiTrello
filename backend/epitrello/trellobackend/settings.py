@@ -11,9 +11,15 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+ENVIRON = \
+        "production" \
+        if os.getenv("ENVIRON", "production") == "production" \
+        else os.getenv("ENVIRON")
 
 
 # Quick-start development settings - unsuitable for production
@@ -23,10 +29,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-2d6*a*m2@9y2%$+17#0j&#n+!lkh(a@*&j549u8ka6)uktemd0"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False if ENVIRON == "production" else True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    x
+    for x in os.getenv("ALLOWED_HOSTS", "").split(";")
+    if x
+]
 
+CORS_ALLOWED_ORIGINS = [
+    x
+    for x in os.getenv("CORS_ALLOWED_ORIGINS", "").split(";")
+    if x
+]
 
 # Application definition
 
@@ -38,17 +53,18 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "myauth.middleware.require_logged",
 ]
 
 ROOT_URLCONF = "trellobackend.urls"
@@ -74,12 +90,26 @@ WSGI_APPLICATION = "trellobackend.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    "default": {
+DATABASES={}
+if ENVIRON == "production":
+    DB_PASS=os.getenv("DB_PASS")
+    DB_USER=os.getenv("DB_USER")
+    DB_PORT=os.getenv("DB_PORT")
+    DB_HOST=os.getenv("DB_HOST")
+    DATABASES["default"] = {
+        "ENGINE": "django.db.backends.postgresql",
+        "OPTIONS": {
+            "password": DB_PASS,
+            "port": DB_PORT,
+            "user": DB_USER,
+            "host": DB_HOST,
+        },
+    }
+else:
+    DATABASES["default"] = {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
     }
-}
 
 
 # Password validation
@@ -117,6 +147,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+STATICFILES_DIRS = [
+    BASE_DIR / "static_2",
+]
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
