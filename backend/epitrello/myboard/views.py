@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from django.views.decorators.csrf import csrf_exempt
 from django.http import Http404, JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.shortcuts import render
@@ -10,6 +11,7 @@ from myboard.models import Task, Board
 
 # Create your views here.
 
+@csrf_exempt
 @require_http_methods(["GET"])
 @require_logged
 def board_id(request, board_id: UUID):
