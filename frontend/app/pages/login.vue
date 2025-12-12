@@ -14,43 +14,26 @@ import { storeToRefs } from 'pinia';
 import { useAuthStore } from '~/store/auth';
 import { GoogleSignInButton, type CredentialResponse} from "vue3-google-signin";
 
-
+const { $bridge } = useNuxtApp()
+const api = $bridge;
 const { authenticateUser } = useAuthStore();
 const { authenticated } = storeToRefs(useAuthStore());
 const router = useRouter();
 
-// handle success event
 const handleLoginSuccess = async (response: CredentialResponse) => {
     const { credential } = response;
-    const login = async() => {
-        try {
-            const response = await fetch(`http://0.0.0.0:5080/user/login/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + credential
-                },
-            });
-            if (!response.ok) {
-                const errBody = await response.json();
-                throw { status: response.status, body: errBody};
-            }
-            return await response.json();
-        } catch (err) {
-            console.error('Network / fetch error login', err);
-            throw err;
-        }
-    }
-    const loginResult = await login();
-    console.log(`this is loginresult ${loginResult}`);
+    const data = await api.login(credential).catch((error) => {
+        console.error(error);
+    });
 
-    authenticateUser(credential);
-    if (authenticated) {
-        router.push('/');
+    if (data) {
+        authenticateUser(credential);
+        if (authenticated) {
+            router.push('/');
+        }
     }
 };
 
-// handle an error event
 const handleLoginError = () => {
   console.error("Login failed");
 };
