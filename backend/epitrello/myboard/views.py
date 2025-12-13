@@ -4,8 +4,10 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import Http404, JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.shortcuts import render
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 
 from myauth.middleware import require_logged
+from myauth.models import User
 from myboard.models import Task, Board
 
 
@@ -18,7 +20,7 @@ def board_id(request, board_id: UUID):
     try:
         board: Board = Board.objects.get(pk=board_id)
     except Board.DoesNotExist:
-        raise Http404("Board does not exist")
+        return Http404("Board does not exist")
     res = {
         "title": f"{board.title}",
         "id": f"{board.id}",
@@ -68,7 +70,23 @@ def board_id(request, board_id: UUID):
     return JsonResponse(res)
 
 
-@require_http_methods(["GET"])
+@csrf_exempt
+@require_http_methods(["POST"])
 @require_logged
 def invit_board_id(request, board_id: UUID):
-    return Http404()
+    email = request.POST.get("email")
+    is_admin = request.POST.get("admin")
+    if email is None or is_admin is None:
+        return HttpResponseBadRequest(f"Missing '{'email' if email is None else 'admin'}' in post body", content_type="text/plain")
+    try:
+        board: Board = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        return Http404("Board does not exist")
+    if f"{board.owner.id}" != request.session["member_id"]:
+        return HttpResponseForbidden("You are not the owner of the board", content_type="text/plain")
+    try:
+        user: User = User.objects.get(email=email)
+    except User.DoesNotExist:
+        return Http404("User from email does not exists")
+    board.members.add(user)
+    return HttpResponse(status_code=200)
