@@ -90,3 +90,36 @@ def invit_board_id(request, board_id: UUID):
         return Http404("User from email does not exists")
     board.members.add(user)
     return HttpResponse(status_code=200)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@require_logged
+def create_board(request):
+    title = request.POST.get("title")
+    if title is None:
+        return HttpResponseBadRequest("Missing 'title' in post body", content_type="text/plain")
+    if len(title) >= 50:
+        return HttpResponseBadRequest("Too many characters in 'title' in post body", content_type="text/plain")
+    try:
+        owner = User.objects.get(pk=request.session["member_id"])
+    except User.DoesNotExist:
+        return Http404("User does not exists")
+    board = Board(title=title, owner=owner)
+    board.save()
+    res = {
+        "id": f"{board.id}"
+    }
+    return JsonResponse(res)
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@require_logged
+def delete_board(request, board_id: UUID):
+    try:
+        board: Board = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        return Http404("Board does not exists")
+    if f"{board.owner.id}" != request.session["member_id"]:
+        return HttpResponseForbidden("You are not the owner of the board", content_type="text/plain")
+    board.delete()
+    return HttpResponse(status_code=200)
