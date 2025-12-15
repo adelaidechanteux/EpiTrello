@@ -1,6 +1,6 @@
 <template>
     <div class="top-bar">
-        <UButton color="secondary" variant="ghost" size="sm"  :ui="{base: 'rounded-sm'}">
+        <UButton color="secondary" variant="ghost" size="sm"  :ui="{base: 'rounded-sm'}" to="/">
             <img src="~/assets/images/trello_logo.png" class="logo-button" alt="trello logo"/>
         </UButton>
         <div class="middle">
@@ -28,15 +28,28 @@
                 </template>
             </UPopover>
         </div>
-        <UButton :avatar="{src: 'https://github.com/nuxt.png', size: 'xs'}" color="secondary" variant="ghost" size="md" :ui="{ base: 'p-1 rounded-sm'}"/>
+        <UDropdownMenu :items="profile" :ui="{content: 'bg-[var(--secondary-grey)] rounded-sm'}">
+            <UButton :avatar="{src: 'https://github.com/nuxt.png', size: 'xs'}" color="secondary" variant="ghost" size="md" :ui="{ base: 'p-1 rounded-sm'}"/>
+        </UDropdownMenu>
     </div>
 </template>
 
 <script setup lang="ts">
-import type { FormError, FormSubmitEvent } from '@nuxt/ui'
+import { useAuthStore } from '~/store/auth';
+import type { DropdownMenuItem, FormError, FormSubmitEvent } from '@nuxt/ui'
+
+const authenticateUser = useAuthStore();
+const router = useRouter();
 
 const items = ref(['Backlog', 'Todo', 'In Progress', 'Done'])
 const value = ref('')
+const profile: DropdownMenuItem[] = [{
+    label: 'Log Out',
+    onSelect() {
+        authenticateUser.logUserOut();
+        router.push('/login');
+    }
+}]
 
 const state = reactive({
     name: undefined
