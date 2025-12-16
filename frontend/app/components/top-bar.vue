@@ -19,7 +19,7 @@
                     </div>
                     <UForm :validate="validate" :state="state" class="space-y-4 p-4" @submit="onSubmit" >
                         <UFormField label="Board title" name="name" size="xs">
-                        <UInput v-model="state.name" class="w-full" size="md" color="secondary" :ui="{base: 'bg-[var(--secondary-grey)] rounded-sm'}"/>
+                        <UInput v-model="state.name" maxlength="49" class="w-full" size="md" color="secondary" :ui="{base: 'bg-[var(--secondary-grey)] rounded-sm'}"/>
                         </UFormField>
                         <UButton type="submit" color="info" size="md" :ui="{ base: 'rounded-sm flex justify-center items-center text-center' }" class="w-full ">
                         Create
