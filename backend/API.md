@@ -220,8 +220,8 @@ BODY:
     "description": "task description",
     "category": "task category", # max 29 characters
     "color": "#00FF33", # as Hexadecimal # optional
-    "date_start": "", # optional
-    "date_end": "", # optional
+    "date_start": "2025-12-16 14:52:42.726993", # optional
+    "date_end": "2025-12-16 14:52:42.726993", # optional
     "assigned": "task assignee (user) id" # optional
 }
 ```
