@@ -59,32 +59,32 @@ Authorization: Bearer jwt
     },
     "tasks": [
         {
-            "title": "some task title",
-            "description": "doing some more title description",
-            "color": "#00FFAA",
-            "class": "ToDo",
-            "date_start": "",
-            "date_end": "",
-            "date_creation": "",
-            "owner": "owner uuid",
-            "assigned": "member uuid",
+            "title": "task title",
+            "description": "task description",
+            "color": "task color as Hexadecimal",
+            "category": "task category",
+            "date_start": null, # or "2025-12-16 14:52:42.726993"
+            "date_end": null, # or "2025-12-16 14:52:42.726993"
+            "date_creation": "2025-12-16 14:52:42.726993",
+            "owner": "task owner (user) id",
+            "assigned": null, # or "task assignee (user) id"
             "completed": false,
-            "id": "task uuid",
+            "id": "task id"
         }
     ],
     "archived": [
         {
-            "title": "some task title",
-            "description": "doing some more title description",
-            "color": "#00FFAA",
-            "class": "ToDo",
-            "date_start": "",
-            "date_end": "",
-            "date_creation": "",
-            "owner": "owner uuid",
-            "assigned": "member uuid",
+            "title": "task title",
+            "description": "task description",
+            "color": "task color as Hexadecimal",
+            "category": "task category",
+            "date_start": null, # or "2025-12-16 14:52:42.726993"
+            "date_end": null, # or "2025-12-16 14:52:42.726993"
+            "date_creation": "2025-12-16 14:52:42.726993",
+            "owner": "task owner (user) id",
+            "assigned": null, # or "task assignee (user) id"
             "completed": false,
-            "id": "task uuid",
+            "id": "task id"
         }
     ]
 }
@@ -202,3 +202,123 @@ Missing `Authorization` header
 #### 404
 
 Board with uuid does not exists
+
+---
+
+## Create Task
+
+METHOD: `POST`
+PATH: `create/task/<uuid:board_id>`
+HEADERS:
+```
+Authorization: Bearer jwt
+```
+BODY:
+```
+{
+    "title": "task title", # max 49 characters
+    "description": "task description",
+    "category": "task category", # max 29 characters
+    "color": "#00FF33", # as Hexadecimal # optional
+    "date_start": "", # optional
+    "date_end": "", # optional
+    "assigned": "task assignee (user) id" # optional
+}
+```
+
+#### 200
+
+```
+{
+    "title": "task title",
+    "description": "task description",
+    "color": "task color as Hexadecimal",
+    "category": "task category",
+    "date_start": null, # or "2025-12-16 14:52:42.726993"
+    "date_end": null, # or "2025-12-16 14:52:42.726993"
+    "date_creation": "2025-12-16 14:52:42.726993",
+    "owner": "task owner (user) id",
+    "assigned": null, # or "task assignee (user) id"
+    "completed": false,
+    "id": "task id"
+}
+```
+
+#### 400
+
+- Missing `Authorization` header
+- or, `Content-Type` header must be 'application/json'
+- or, Bad json format for body
+- or, Missing one of 'title', 'description', 'category' in body
+- or, Bad value for 'title' or 'category'
+
+#### 403
+
+- Google did not validate the authorization jwt
+
+#### 404
+
+- Board does not exists
+- or, user does not exists
+
+---
+
+## Delete Task (archived)
+
+METHOD: `GET`
+PATH: `delete/task/<uuid:board_id>/<uuid_task_id>/`
+HEADERS:
+```
+Authorization: Bearer jwt
+```
+
+#### 200
+
+```
+{}
+```
+
+#### 400
+
+- Missing `Authorization` header
+- or, Task is not part of Board tasks
+
+#### 403
+
+- Google did not validate the authorization jwt
+
+#### 404
+
+- Task does not exists
+- or, Board does not exists
+
+---
+
+## Delete (force) Task (from archived)
+
+METHOD: `GET`
+PATH: `deleteforce/task/<uuid:board_id>/<uuid:task_id>/`
+HEADERS:
+```
+Authorization: Bearer jwt
+```
+
+#### 200
+
+```
+{}
+```
+
+#### 400
+
+- Missing `Authorization` header
+- or, Task is not part of Board archived
+
+#### 403
+
+- Google did not validate the authorization jwt
+
+#### 404
+
+- Task does not exists
+- or, Board does not exists
