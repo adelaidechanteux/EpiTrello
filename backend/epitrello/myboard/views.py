@@ -287,3 +287,158 @@ def update_task(request, task_id: UUID):
         "id": f"{task.id}",
     }
     return JsonResponse(res)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@require_logged
+def update_board(request, board_id: UUID):
+    try:
+        board: Board = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        raise Http404("Board does not exists")
+    if request.content_type != "application/json":
+        return HttpResponseBadRequest("Content-Type must be 'application/json'", content_type="text/plain")
+    try:
+        POST = json.loads(request.body.decode())
+    except Exception as e:
+        print(f"{e}", file=sys.stderr)
+        return HttpResponseBadRequest(f"Bad format for json body {e}", content_type="text/plain")
+    if "owner" in POST and board.owner is not None:
+        if POST["owner"] != f"{board.owner.id}":
+            if request.session["member_id"] != f"{board.owner.id}":
+                return HttpResponseForbidden("Attempt to change owner but user is not the owner")
+    optional_arg = []
+    def set_optional(key: str):
+        if key in POST:
+            optional_arg.append(key)
+            setattr(board, key, POST.get(key))
+    set_optional("title")
+    set_optional("owner")
+    board.save(update_fields=optional_arg)
+    res = {
+        "title": f"{board.title}",
+        "id": f"{board.id}",
+        "favorite": False, # TODO
+        "members": {
+            f"{member.id}": {
+                "profile_picture": f"{member.profile_picture}",
+                "username": f"{member.username}",
+                "email": f"{member.email}",
+                "owner": member.id == board.owner.id,
+                "id": f"{member.id}",
+            }
+            for member in board.members.all()
+        },
+        "tasks": [
+            {
+                "title": f"{task.title}",
+                "description": f"{task.description}",
+                "color": f"{task.color}",
+                "category": f"{task.category}",
+                "date_start": None if task.date_start is None else f"{task.date_start}",
+                "date_end": None if task.date_end is None else f"{task.date_end}",
+                "date_creation": f"{task.date_creation}",
+                "owner": f"{task.owner.id}",
+                "assigned": None if task.assigned is None else f"{task.assigned.id}",
+                "completed": task.completed,
+                "id": f"{task.id}",
+            }
+            for task in board.tasks.all()
+        ],
+        "archived": [
+            {
+                "title": f"{task.title}",
+                "description": f"{task.description}",
+                "color": f"{task.color}",
+                "category": f"{task.category}",
+                "date_start": None if task.date_start is None else f"{task.date_start}",
+                "date_end": None if task.date_end is None else f"{task.date_end}",
+                "date_creation": f"{task.date_creation}",
+                "owner": f"{task.owner.id}",
+                "assigned": None if task.assigned is None else f"{task.assigned.id}",
+                "completed": task.completed,
+                "id": f"{task.id}",
+            }
+            for task in board.archived.all()
+        ],
+    }
+    return JsonResponse(res)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@require_logged
+def delete_member(request, board_id: UUID):
+    try:
+        board: Board = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        raise Http404("Board does not exists")
+    if request.content_type != "application/json":
+        return HttpResponseBadRequest("Content-Type must be 'application/json'", content_type="text/plain")
+    try:
+        POST = json.loads(request.body.decode())
+    except Exception as e:
+        print(f"{e}", file=sys.stderr)
+        return HttpResponseBadRequest(f"Bad format for json body {e}", content_type="text/plain")
+    if "email" not in POST:
+        return HttpResponseBadRequest("Missing 'email' in body", content_type="text/plain")
+    try:
+        user = User.objects.get(email=POST["email"])
+    except User.DoesNotExist:
+        raise Http404("User with email does not exists")
+    try:
+        session_member = User.objects.get(request.session["member_id"])
+    except User.DoesNotExist:
+        raise Http404("User session does not exists")
+    if board.owner.id != session_member.id:
+        return HttpResponseForbidden("User is not the owner of the board", content_type="text/plain")
+    board.members.remove(user)
+    res = {
+        "title": f"{board.title}",
+        "id": f"{board.id}",
+        "favorite": False, # TODO
+        "members": {
+            f"{member.id}": {
+                "profile_picture": f"{member.profile_picture}",
+                "username": f"{member.username}",
+                "email": f"{member.email}",
+                "owner": member.id == board.owner.id,
+                "id": f"{member.id}",
+            }
+            for member in board.members.all()
+        },
+        "tasks": [
+            {
+                "title": f"{task.title}",
+                "description": f"{task.description}",
+                "color": f"{task.color}",
+                "category": f"{task.category}",
+                "date_start": None if task.date_start is None else f"{task.date_start}",
+                "date_end": None if task.date_end is None else f"{task.date_end}",
+                "date_creation": f"{task.date_creation}",
+                "owner": f"{task.owner.id}",
+                "assigned": None if task.assigned is None else f"{task.assigned.id}",
+                "completed": task.completed,
+                "id": f"{task.id}",
+            }
+            for task in board.tasks.all()
+        ],
+        "archived": [
+            {
+                "title": f"{task.title}",
+                "description": f"{task.description}",
+                "color": f"{task.color}",
+                "category": f"{task.category}",
+                "date_start": None if task.date_start is None else f"{task.date_start}",
+                "date_end": None if task.date_end is None else f"{task.date_end}",
+                "date_creation": f"{task.date_creation}",
+                "owner": f"{task.owner.id}",
+                "assigned": None if task.assigned is None else f"{task.assigned.id}",
+                "completed": task.completed,
+                "id": f"{task.id}",
+            }
+            for task in board.archived.all()
+        ],
+    }
+    return JsonResponse(res)

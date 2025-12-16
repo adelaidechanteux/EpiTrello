@@ -380,3 +380,86 @@ BODY:
 #### 404
 
 Task does not exists
+
+---
+
+## Remove Member
+
+METHOD: `POST`
+PATH: `delete/member/<uuid:board_id>/`
+HEADERS:
+```
+Authorization: Bearer jwt
+```
+BODY:
+```
+{
+    "email": "a@a.com"
+}
+```
+
+#### 200
+
+```
+{
+    "title": "some board title",
+    "id": "board uuid",
+    "favorite": false,
+    "members": {
+        "member uuid": {
+            "profile_picture": "profile picture uri",
+            "username": "member username",
+            "email": "a@a.com",
+            "owner": false,
+            "id": "member id"
+        }
+    },
+    "tasks": [
+        {
+            "title": "task title",
+            "description": "task description",
+            "color": "task color as Hexadecimal",
+            "category": "task category",
+            "date_start": null, # or "2025-12-16 14:52:42.726993"
+            "date_end": null, # or "2025-12-16 14:52:42.726993"
+            "date_creation": "2025-12-16 14:52:42.726993",
+            "owner": "task owner (user) id",
+            "assigned": null, # or "task assignee (user) id"
+            "completed": false,
+            "id": "task id"
+        }
+    ],
+    "archived": [
+        {
+            "title": "task title",
+            "description": "task description",
+            "color": "task color as Hexadecimal",
+            "category": "task category",
+            "date_start": null, # or "2025-12-16 14:52:42.726993"
+            "date_end": null, # or "2025-12-16 14:52:42.726993"
+            "date_creation": "2025-12-16 14:52:42.726993",
+            "owner": "task owner (user) id",
+            "assigned": null, # or "task assignee (user) id"
+            "completed": false,
+            "id": "task id"
+        }
+    ]
+}
+```
+
+#### 400
+
+- Missing `Authorization` header
+- or, `Content-Type` header must be 'application/json'
+- or, Bad json format for body
+- or, Missing 'email' in body
+
+#### 403
+
+- Google did not validate the authorization jwt
+- or, Owner is not connected user
+
+#### 404
+
+- Board does not exists
+- User does not exists
