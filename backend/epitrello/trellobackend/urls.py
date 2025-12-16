@@ -27,7 +27,7 @@ urlpatterns = [
     path("user/login/", myauth_views.user_login),
     path("board/<uuid:id>/", myboard_views.board_id), # same as '/get/board/<>'
     path("invit/<uuid:id>/", myboard_views.invit_board_id),
-    path("get/board/<uuid:id>/", myboard_views.board_id), # same as '/board/<>'
+    path("get/board/<uuid:board_id>/", myboard_views.board_id), # same as '/board/<>'
     path("create/board/", myboard_views.create_board),
-    path("delete/board/<uuid:id>/", myboard_views.delete_board),
+    path("delete/board/<uuid:board_id>/", myboard_views.delete_board),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -35,6 +35,7 @@ def require_logged(func):
             if user_picture is not None:
                 wargs["profile_picture"] = user_picture
             m = User(username=user_name, email=user_email, authprovider="ggl", authuserid=user_id, **wargs)
+            m.save()
         request.session["member_id"] = f"{m.id}"
         return func(request, *args, **kwargs)
     return wrapper
