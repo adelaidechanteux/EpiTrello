@@ -23,7 +23,6 @@ def require_logged(func):
             idinfo: dict[str, str] = ggl_id_token.verify_oauth2_token(id_token, ggl_requests.Request())
             user_id = idinfo['sub']
             user_email = idinfo['email']
-            print(f"{idinfo}", file=sys.stderr)
             user_picture = idinfo.get('picture')
             user_name = idinfo['name']
         except ValueError:
