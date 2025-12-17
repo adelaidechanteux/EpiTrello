@@ -1,3 +1,4 @@
+from django.utils import timezone
 import uuid
 from django.db import models
 
@@ -14,11 +15,11 @@ class Task(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=50)
     description = models.TextField()
-    color = models.CharField(max_length=7, choices=COLOR_CHOICES)
+    color = models.CharField(max_length=7, choices=COLOR_CHOICES, default=COLOR_CHOICES[0][0])
     category = models.CharField(max_length=30)
-    date_start = models.DateTimeField()
-    date_end = models.DateTimeField()
-    date_creation = models.DateTimeField()
+    date_start = models.DateTimeField(blank=True, null=True)
+    date_end = models.DateTimeField(blank=True, null=True)
+    date_creation = models.DateTimeField(default=timezone.now)
     owner = models.ForeignKey(to=User, related_name="task_owner_set", on_delete=models.SET_NULL, blank=True, null=True)
     assigned = models.ForeignKey(to=User, related_name="task_assigned_set", on_delete=models.SET_NULL, blank=True, null=True)
     completed = models.BooleanField(default=False)

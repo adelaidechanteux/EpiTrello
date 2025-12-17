@@ -5,7 +5,7 @@ import json
 from django.views.decorators.csrf import csrf_exempt
 from django.http import Http404, JsonResponse
 from django.views.decorators.http import require_http_methods
-from django.http import HttpResponseBadRequest, HttpResponseForbidden
+from django.http import HttpResponseBadRequest, HttpResponseForbidden, HttpResponseServerError
 
 from myauth.middleware import require_logged
 from myauth.models import User
@@ -17,7 +17,7 @@ from myboard.models import Task, Board
 @csrf_exempt
 @require_http_methods(["GET"])
 @require_logged
-def board_id(request, board_id: UUID):
+def get_board(request, board_id: UUID):
     try:
         board: Board = Board.objects.get(pk=board_id)
     except Board.DoesNotExist:
@@ -41,12 +41,12 @@ def board_id(request, board_id: UUID):
                 "title": f"{task.title}",
                 "description": f"{task.description}",
                 "color": f"{task.color}",
-                "class": f"{task.category}",
-                "date_start": f"{task.date_start}",
-                "date_end": f"{task.date_end}",
+                "category": f"{task.category}",
+                "date_start": None if task.date_start is None else f"{task.date_start}",
+                "date_end": None if task.date_end is None else f"{task.date_end}",
                 "date_creation": f"{task.date_creation}",
                 "owner": f"{task.owner.id}",
-                "assigned": f"{task.assigned.id}",
+                "assigned": None if task.assigned is None else f"{task.assigned.id}",
                 "completed": task.completed,
                 "id": f"{task.id}",
             }
@@ -57,12 +57,12 @@ def board_id(request, board_id: UUID):
                 "title": f"{task.title}",
                 "description": f"{task.description}",
                 "color": f"{task.color}",
-                "class": f"{task.category}",
-                "date_start": f"{task.date_start}",
-                "date_end": f"{task.date_end}",
+                "category": f"{task.category}",
+                "date_start": None if task.date_start is None else f"{task.date_start}",
+                "date_end": None if task.date_end is None else f"{task.date_end}",
                 "date_creation": f"{task.date_creation}",
                 "owner": f"{task.owner.id}",
-                "assigned": f"{task.assigned.id}",
+                "assigned": None if task.assigned is None else f"{task.assigned.id}",
                 "completed": task.completed,
                 "id": f"{task.id}",
             }
@@ -139,4 +139,100 @@ def delete_board(request, board_id: UUID):
     if f"{board.owner.id}" != request.session["member_id"]:
         return HttpResponseForbidden("You are not the owner of the board", content_type="text/plain")
     board.delete()
+    return JsonResponse({})
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@require_logged
+def create_task(request, board_id: UUID):
+    try:
+        board: Board = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        raise Http404("Board does not exists")
+    if request.content_type != "application/json":
+        return HttpResponseBadRequest("Content-Type must be 'application/json'", content_type="text/plain")
+    try:
+        POST = json.loads(request.body.decode())
+    except Exception as e:
+        print(f"{e}", file=sys.stderr)
+        return HttpResponseBadRequest(f"Bad format for json body {e}", content_type="text/plain")
+    try:
+        owner = User.objects.get(pk=request.session["member_id"])
+    except User.DoesNotExist:
+        raise Http404("User does not exists")
+    title = POST.get("title")
+    description = POST.get("description")
+    category = POST.get("category")
+    if title is None or description is None or category is None:
+        return HttpResponseBadRequest("Missing one of 'title', 'description', or 'category'", content_type="text/plain")
+    if len(title) >= 50 or len(category) >= 30:
+        return HttpResponseBadRequest("Value of 'title' is more than 49 char or 'category' is more than 29", content_type="text/plain")
+    optional_arg = {}
+    if "color" in POST:
+        optional_arg["color"] = POST.get("color")
+    if "date_start" in POST:
+        optional_arg["date_start"] = POST.get("date_start")
+    if "date_end" in POST:
+        optional_arg["date_end"] = POST.get("date_end")
+    if "assigned" in POST:
+        optional_arg["assigned"] = POST.get("assigned")
+    try:
+        task = Task(title=title, description=description, category=category, owner=owner, **optional_arg)
+        task.save()
+    except Exception as e:
+        print(f"{e}", file=sys.stderr)
+        return HttpResponseServerError("Failed to save", content_type="text/plain")
+    board.tasks.add(task)
+    res = {
+        "title": f"{task.title}",
+        "description": f"{task.description}",
+        "color": f"{task.color}",
+        "category": f"{task.category}",
+        "date_start": None if task.date_start is None else f"{task.date_start}",
+        "date_end": None if task.date_end is None else f"{task.date_end}",
+        "date_creation": f"{task.date_creation}",
+        "owner": f"{task.owner.id}",
+        "assigned": None if task.assigned is None else f"{task.assigned.id}",
+        "completed": task.completed,
+        "id": f"{task.id}",
+    }
+    return JsonResponse(res)
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@require_logged
+def delete_task(request, board_id: UUID, task_id: UUID):
+    try:
+        task: Task = Task.objects.get(pk=task_id)
+    except Task.DoesNotExist:
+        raise Http404("Task does not exists")
+    try:
+        board: Board = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        raise Http404("Board does not exists")
+    if board.tasks.filter(pk=task_id).count() == 0:
+        return HttpResponseBadRequest("Task is not in the Board tasks", content_type="text/plain")
+    board.tasks.remove(task)
+    board.archived.add(task)
+    return JsonResponse({})
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@require_logged
+def deleteforce_task(request, board_id: UUID, task_id: UUID):
+    try:
+        task: Task = Task.objects.get(pk=task_id)
+    except Task.DoesNotExist:
+        raise Http404("Task does not exists")
+    try:
+        board: Board = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        raise Http404("Board does not exists")
+    if board.archived.filter(pk=task_id).count() == 0:
+        return HttpResponseBadRequest("Task is not in the Board tasks", content_type="text/plain")
+    board.archived.remove(task)
+    task.delete()
     return JsonResponse({})
