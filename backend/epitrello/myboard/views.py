@@ -239,7 +239,7 @@ def deleteforce_task(request, board_id: UUID, task_id: UUID):
 
 
 @csrf_exempt
-@require_http_methods(["POST"])
+@require_http_methods(["PUT"])
 @require_logged
 def update_task(request, task_id: UUID):
     try:

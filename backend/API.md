@@ -327,7 +327,7 @@ Authorization: Bearer jwt
 
 ## Update Task
 
-METHOD: `POST`
+METHOD: `PUT`
 PATH: `update/task/<uuid:task_id>/`
 HEADERS:
 ```
