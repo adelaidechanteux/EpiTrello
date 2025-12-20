@@ -22,6 +22,7 @@ const router = useRouter();
 
 const handleLoginSuccess = async (response: CredentialResponse) => {
     const { credential } = response;
+    console.log(credential);
     const data = await api.login(credential).catch((error) => {
         console.error(error);
     });
