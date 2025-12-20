@@ -367,7 +367,7 @@ def update_board(request, board_id: UUID):
 
 
 @csrf_exempt
-@require_http_methods(["POST"])
+@require_http_methods(["PUT"])
 @require_logged
 def delete_member(request, board_id: UUID):
     try:
