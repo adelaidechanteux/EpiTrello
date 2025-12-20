@@ -236,3 +236,54 @@ def deleteforce_task(request, board_id: UUID, task_id: UUID):
     board.archived.remove(task)
     task.delete()
     return JsonResponse({})
+
+
+@csrf_exempt
+@require_http_methods(["PUT"])
+@require_logged
+def update_task(request, task_id: UUID):
+    try:
+        task: Task = Task.objects.get(pk=task_id)
+    except Task.DoesNotExist:
+        raise Http404("Task does not exists")
+    if request.content_type != "application/json":
+        return HttpResponseBadRequest("Content-Type must be 'application/json'", content_type="text/plain")
+    try:
+        POST = json.loads(request.body.decode())
+    except Exception as e:
+        print(f"{e}", file=sys.stderr)
+        return HttpResponseBadRequest(f"Bad format for json body {e}", content_type="text/plain")
+    if "owner" in POST and task.owner is not None:
+        if POST["owner"] != f"{task.owner.id}":
+            if request.session["member_id"] != f"{task.owner.id}":
+                return HttpResponseForbidden("Attempt to change owner but user is not the owner")
+    optional_arg = []
+    def set_optional(key: str):
+        if key in POST:
+            optional_arg.append(key)
+            setattr(task, key, POST.get(key))
+    set_optional("title")
+    set_optional("description")
+    set_optional("color")
+    set_optional("category")
+    set_optional("date_start")
+    set_optional("date_end")
+    set_optional("owner")
+    set_optional("assigned")
+    set_optional("completed")
+    task.save(update_fields=optional_arg)
+    task = Task.objects.get(pk=task.id)
+    res = {
+        "title": f"{task.title}",
+        "description": f"{task.description}",
+        "color": f"{task.color}",
+        "category": f"{task.category}",
+        "date_start": None if task.date_start is None else f"{task.date_start}",
+        "date_end": None if task.date_end is None else f"{task.date_end}",
+        "date_creation": f"{task.date_creation}",
+        "owner": f"{task.owner.id}",
+        "assigned": None if task.assigned is None else f"{task.assigned.id}",
+        "completed": task.completed,
+        "id": f"{task.id}",
+    }
+    return JsonResponse(res)

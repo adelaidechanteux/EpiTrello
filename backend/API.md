@@ -322,3 +322,61 @@ Authorization: Bearer jwt
 
 - Task does not exists
 - or, Board does not exists
+
+---
+
+## Update Task
+
+METHOD: `PUT`
+PATH: `update/task/<uuid:task_id>/`
+HEADERS:
+```
+Authorization: Bearer jwt
+```
+BODY:
+```
+{
+    "title": "task title", # max 49 characters # optional
+    "description": "task description", # optional
+    "color": "#00FF33", # as Hexadecimal # optional
+    "category": "task category", # max 29 characters # optional
+    "date_start": "2025-12-16 14:52:42.726993", # optional
+    "date_end": "2025-12-16 14:52:42.726993", # optional
+    "owner": "task owner (user) id", # optional
+    "assigned": "task assignee (user) id", # optional
+    "completed": false # optional
+}
+```
+
+#### 200
+
+```
+{
+    "title": "task title",
+    "description": "task description",
+    "color": "task color as Hexadecimal",
+    "category": "task category",
+    "date_start": null, # or "2025-12-16 14:52:42.726993"
+    "date_end": null, # or "2025-12-16 14:52:42.726993"
+    "date_creation": "2025-12-16 14:52:42.726993",
+    "owner": "task owner (user) id",
+    "assigned": null, # or "task assignee (user) id"
+    "completed": false,
+    "id": "task id"
+}
+```
+
+#### 400
+
+- Missing `Authorization` header
+- or, `Content-Type` header must be 'application/json'
+- or, Bad json format for body
+
+#### 403
+
+- Google did not validate the authorization jwt
+- Attempting to change owner, but user is not the owner of the task
+
+#### 404
+
+Task does not exists
