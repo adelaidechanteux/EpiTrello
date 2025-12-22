@@ -13,7 +13,7 @@ from myauth.models import User
 @csrf_exempt
 @require_http_methods(["POST"])
 @require_logged
-def user_login(_):
+def user_login(request):
     try:
         u = User.objects.get(pk=request.session["member_id"])
     except User.DoesNotExist:
