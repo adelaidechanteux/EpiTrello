@@ -14,21 +14,26 @@ import { storeToRefs } from 'pinia';
 import { useAuthStore } from '~/store/auth';
 import { GoogleSignInButton, type CredentialResponse} from "vue3-google-signin";
 
-
+const { $bridge } = useNuxtApp()
+const api = $bridge;
 const { authenticateUser } = useAuthStore();
 const { authenticated } = storeToRefs(useAuthStore());
 const router = useRouter();
 
-// handle success event
-const handleLoginSuccess = (response: CredentialResponse) => {
+const handleLoginSuccess = async (response: CredentialResponse) => {
     const { credential } = response;
-    authenticateUser(credential);
-    if (authenticated) {
-        router.push('/');
+    const data = await api.login(credential).catch((error) => {
+        console.error(error);
+    });
+
+    if (data) {
+        authenticateUser(credential);
+        if (authenticated) {
+            router.push('/');
+        }
     }
 };
 
-// handle an error event
 const handleLoginError = () => {
   console.error("Login failed");
 };
