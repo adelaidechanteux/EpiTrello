@@ -1,4 +1,3 @@
-from turtle import position
 from uuid import UUID
 import sys
 import json
