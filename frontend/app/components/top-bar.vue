@@ -29,7 +29,7 @@
             </UPopover>
         </div>
         <UDropdownMenu :items="profile" :ui="{content: 'bg-[var(--secondary-grey)] rounded-sm'}">
-            <UButton :avatar="{src: authenticateUser.user.profile_picture, size: 'xs'}" color="secondary" variant="ghost" size="md" :ui="{ base: 'p-1 rounded-sm'}"/>
+            <UButton :avatar="{src: auth.user.profile_picture, size: 'xs'}" color="secondary" variant="ghost" size="md" :ui="{ base: 'p-1 rounded-sm'}"/>
         </UDropdownMenu>
     </div>
 </template>
@@ -38,15 +38,18 @@
 import { useAuthStore } from '~/store/auth';
 import type { DropdownMenuItem, FormError, FormSubmitEvent } from '@nuxt/ui'
 
-const authenticateUser = useAuthStore();
+const { $bridge } = useNuxtApp()
+const api = $bridge
+const auth = useAuthStore();
 const router = useRouter();
+const toast = useToast()
 
 const items = ref(['Backlog', 'Todo', 'In Progress', 'Done'])
 const value = ref('')
 const profile: DropdownMenuItem[] = [{
     label: 'Log Out',
     onSelect() {
-        authenticateUser.logUserOut();
+        auth.logUserOut();
         router.push('/login');
     }
 }]
@@ -63,11 +66,37 @@ function validate(state: Partial<Schema>): FormError[] {
     return errors
 }
 
-const toast = useToast()
 async function onSubmit(event: FormSubmitEvent<Schema>) {
-    toast.add({title: 'Success', description: 'The board is being created.', color: 'info'})
-    console.log(event.data)
-    console.log(authenticateUser.user)
+    if (!state.name) return
+
+    try {
+        api.setjwt(auth.jwt)
+
+        const result = await api.createBoard(state.name)
+
+        toast.add({
+            title: 'Success',
+            description: 'Board created successfully.',
+            color: 'info',
+            ui: {
+                root: 'bg-[var(--secondary-grey)]',
+            },
+        })
+
+        state.name = undefined
+
+        console.log('Created board:', result)
+    } catch (err) {
+        console.error(err)
+        toast.add({
+        title: 'Error',
+        description: 'Failed to create board.',
+        color: 'error',
+        ui: {
+                root: 'bg-[var(--secondary-grey)]',
+            },
+        })
+    }
 }
 </script>
 

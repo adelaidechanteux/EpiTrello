@@ -66,7 +66,7 @@ export class bridge {
                 body: JSON.stringify(boardName)
             });
             if (response.ok) {
-                return { status: response.status, success: true };
+                return await response.json();
             }
             throw { status: response.status, success: false };
         } catch (err) {
