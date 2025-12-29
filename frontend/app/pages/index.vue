@@ -5,7 +5,7 @@
     <UPageBody>
       <UContainer class="max-w-[914px] w-[914]">
         <div class="board-overview-container">
-          <BoardOverview v-for="(board, index) in boards" :key="board.id || index" v-bind="board"/>
+          <BoardOverview v-for="(board, index) in boards" :key="board.id || index" v-bind="board" @click="router.push(`/boards/${board.id}`)"/>
         </div>
       </UContainer>
     </UPageBody>
@@ -22,6 +22,8 @@ const api = $bridge
 const auth = useAuthStore()
 const boards = ref<any[]>([])
 const loading = ref(false)
+
+const router = useRouter()
 
 onMounted(async () => {
   if (!auth.authenticated || !auth.user.id) return
