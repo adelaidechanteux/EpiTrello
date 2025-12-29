@@ -42,11 +42,11 @@ export class bridge {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': 'Bearer' + this.jwt
+                    'Authorization': 'Bearer ' + this.jwt
                 },
             });
             if (response.ok) {
-                return { status: response.status, success: true };
+                return await response.json();
             }
             throw { status: response.status, success: false };
         } catch (err) {
@@ -60,8 +60,8 @@ export class bridge {
             const response = await fetch(this.url + `/create/board/`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'appliaction/json',
-                    'Authorization': 'Bearer' + this.jwt
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + this.jwt
                 },
                 body: JSON.stringify(boardName)
             });
@@ -80,8 +80,8 @@ export class bridge {
             const response = await fetch(this.url + `/delete/board/` + boardID, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'appliaction/json',
-                    'Authorization': 'Bearer' + this.jwt
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + this.jwt
                 },
             });
             if (response.ok) {
@@ -99,8 +99,8 @@ export class bridge {
             const response = await fetch(this.url + `/create/task/` + boardID + `/`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'appliaction/json',
-                    'Authorization': 'Bearer' + this.jwt
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + this.jwt
                 },
                 body: JSON.stringify(data)
             });
@@ -119,8 +119,8 @@ export class bridge {
             const response = await fetch(this.url + `/delete/task/` + boardID + `/` + taskID + `/`, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'appliaction/json',
-                    'Authorization': 'Bearer' + this.jwt
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + this.jwt
                 },
             })
             if (response.ok) {
@@ -138,8 +138,8 @@ export class bridge {
             const response = await fetch(this.url + `/deleteforce/task/` + boardID + `/` + taskID + `/`, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'appliaction/json',
-                    'Authorization': 'Bearer' + this.jwt
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + this.jwt
                 },
             })
             if (response.ok) {
@@ -157,8 +157,8 @@ export class bridge {
             const response = await fetch(this.url + `/update/task/` + taskID + `/`, {
                 method: 'PUT',
                 headers: {
-                    'Content-Type': 'appliaction/json',
-                    'Authorization': 'Bearer' + this.jwt
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + this.jwt
                 },
                 body: JSON.stringify(data)
             })

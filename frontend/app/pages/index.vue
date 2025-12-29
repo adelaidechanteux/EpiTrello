@@ -5,7 +5,7 @@
     <UPageBody>
       <UContainer class="max-w-[914px] w-[914]">
         <div class="board-overview-container">
-          <BoardOverview v-for="(test, index) in test" :key="index" v-bind="test"/>
+          <BoardOverview v-for="(board, index) in boards" :key="board.id || index" v-bind="board"/>
         </div>
       </UContainer>
     </UPageBody>
@@ -13,19 +13,28 @@
 </template>
 
 <script setup lang="ts">
-const test = ref([
-    {
-        color: '#666666',
-        title: 'test1'
-    },
-    {
-        color: '#000000',
-        title: 'test2'
-    },{
-        color: '#FFFFFF',
-        title: 'testdeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee3'
-    },
-])
+import { ref, onMounted } from 'vue'
+import { useAuthStore } from '~/store/auth'
+
+const { $bridge } = useNuxtApp()
+const api = $bridge
+
+const auth = useAuthStore()
+const boards = ref<any[]>([])
+const loading = ref(false)
+
+onMounted(async () => {
+  if (!auth.authenticated || !auth.user.id) return
+
+  api.setjwt(auth.jwt)
+
+  loading.value = true
+  try {
+    boards.value = await api.getBoards(auth.user.id)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <style>

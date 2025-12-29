@@ -4,6 +4,7 @@ export const useAuthStore = defineStore('auth', {
     state: () => ({
         authenticated: false,
         loading: false,
+        jwt: '',
         user: {
             id: '',
             username: '',
@@ -13,10 +14,10 @@ export const useAuthStore = defineStore('auth', {
     }),
     actions: {
         async authenticateUser(credential, user) {
-
             if (credential) {
                 const token = useCookie('token');
                 token.value = credential;
+                this.jwt = credential;
                 this.authenticated = true;
             }
             if (user) {
@@ -26,10 +27,18 @@ export const useAuthStore = defineStore('auth', {
             }
         },
         logUserOut() {
-            const token = useCookie('token');
-            this.authenticated = false;
-            token.value = null;
+            const token = useCookie('token')
+            token.value = null
+            this.jwt = ''
+            this.authenticated = false
+            this.user = {
+                id: '',
+                username: '',
+                profile_picture: '',
+                email: '',
+            }
         },
+
     },
     persist: {
         storage: piniaPluginPersistedstate.localStorage(),
