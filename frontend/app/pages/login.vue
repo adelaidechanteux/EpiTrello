@@ -27,7 +27,7 @@ const handleLoginSuccess = async (response: CredentialResponse) => {
     });
 
     if (data) {
-        authenticateUser(credential);
+        authenticateUser(credential, data);
         if (authenticated) {
             router.push('/');
         }

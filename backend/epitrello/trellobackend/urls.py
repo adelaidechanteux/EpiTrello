@@ -32,6 +32,8 @@ urlpatterns = [
     path("create/task/<uuid:board_id>/", myboard_views.create_task),
     path("delete/board/<uuid:board_id>/", myboard_views.delete_board),
     path("delete/task/<uuid:board_id>/<uuid:task_id>/", myboard_views.delete_task),
+    path("delete/member/<uuid:board_id>/", myboard_views.delete_member),
     path("deleteforce/task/<uuid:board_id>/<uuid:task_id>/", myboard_views.deleteforce_task),
     path("update/task/<uuid:task_id>/", myboard_views.update_task),
+    path("update/board/<uuid:board_id>/", myboard_views.update_board),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

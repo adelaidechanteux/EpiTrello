@@ -25,11 +25,11 @@ export class bridge {
             if (response.ok) {
                 if (credential) {
                     this.setjwt(credential)
-                    return { status: response.status, success: true };
-
+                    return await response.json();
                 }
             }
-            throw { status: response.status, success: false };
+            const errBody = await response.json();
+            throw { status: response.status, body: errBody };
         } catch (err) {
             console.error('Network / fetch error login', err);
             throw err;
