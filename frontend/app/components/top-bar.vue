@@ -29,7 +29,7 @@
             </UPopover>
         </div>
         <UDropdownMenu :items="profile" :ui="{content: 'bg-[var(--secondary-grey)] rounded-sm'}">
-            <UButton :avatar="{src: 'https://github.com/nuxt.png', size: 'xs'}" color="secondary" variant="ghost" size="md" :ui="{ base: 'p-1 rounded-sm'}"/>
+            <UButton :avatar="{src: authenticateUser.user.profile_picture, size: 'xs'}" color="secondary" variant="ghost" size="md" :ui="{ base: 'p-1 rounded-sm'}"/>
         </UDropdownMenu>
     </div>
 </template>
@@ -67,6 +67,7 @@ const toast = useToast()
 async function onSubmit(event: FormSubmitEvent<Schema>) {
     toast.add({title: 'Success', description: 'The board is being created.', color: 'info'})
     console.log(event.data)
+    console.log(authenticateUser.user)
 }
 </script>
 

@@ -21,6 +21,8 @@ export const useAuthStore = defineStore('auth', {
             }
             if (user) {
                 this.user = user;
+                console.log("this in auth")
+                console.log(this.user)
             }
         },
         logUserOut() {
@@ -28,5 +30,8 @@ export const useAuthStore = defineStore('auth', {
             this.authenticated = false;
             token.value = null;
         },
+    },
+    persist: {
+        storage: piniaPluginPersistedstate.localStorage(),
     },
 });
