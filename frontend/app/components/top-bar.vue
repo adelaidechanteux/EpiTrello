@@ -85,7 +85,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
         state.name = undefined
 
-        console.log('Created board:', result)
+        router.push(`/boards/${result.id}`)
     } catch (err) {
         console.error(err)
         toast.add({

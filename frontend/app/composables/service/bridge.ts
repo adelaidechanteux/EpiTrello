@@ -63,7 +63,7 @@ export class bridge {
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer ' + this.jwt
                 },
-                body: JSON.stringify(boardName)
+                body: JSON.stringify({ title: boardName }),
             });
             if (response.ok) {
                 return await response.json();
