@@ -58,7 +58,7 @@ def get_board(request, board_id: UUID):
                 "completed": task.completed,
                 "id": f"{task.id}",
             }
-            for task in board.tasks.all().order_by("position_index")
+            for task in board.tasks.all()
         ],
         "archived": [
             {
@@ -196,8 +196,6 @@ def create_task(request, board_id: UUID):
     title = POST.get("title")
     description = POST.get("description")
     category = POST.get("category")
-    tasks = board.tasks.all().order_by("position_index")
-    position_index = 0 if len(tasks) == 0 else tasks.last().position_index + 1
     if title is None or description is None or category is None:
         return HttpResponseBadRequest(
             "Missing one of 'title', 'description', or 'category'",
@@ -223,7 +221,6 @@ def create_task(request, board_id: UUID):
             description=description,
             category=category,
             owner=owner,
-            position_index=position_index,
             **optional_arg,
         )
         task.save()
@@ -242,7 +239,6 @@ def create_task(request, board_id: UUID):
         "owner": f"{task.owner.id}",
         "assigned": None if task.assigned is None else f"{task.assigned.id}",
         "completed": task.completed,
-        "position_index": task.position_index,
         "id": f"{task.id}",
     }
     return JsonResponse(res)
@@ -266,8 +262,6 @@ def delete_task(request, board_id: UUID, task_id: UUID):
         )
     board.tasks.remove(task)
     board.archived.add(task)
-    task.position_index = 0
-    task.save(update_fields="position_index")
     return JsonResponse({})
 
 
@@ -317,20 +311,6 @@ def update_task(request, task_id: UUID):
                 return HttpResponseForbidden(
                     "Attempt to change owner but user is not the owner"
                 )
-    tasks_list = task.board_tasks_set[0].tasks().order_by("position_index")
-    if "position_index" in POST:
-        if len(task.board_tasks_set) != 1:
-            return HttpResponseBadRequest(
-                "Attempt to change 'position_index' but tasks is not part of a board tasks"
-            )
-        t = tasks_list.last()
-        if t is None or POST["position_index"] < 0:
-            POST["position_index"] = 0
-        elif POST["position_index"] > t.position_index:
-            POST["position_index"] = t.position_index + 1
-        tasks_gt = tasks_list.filter(position_index__gt=POST["position_index"])
-        for i in range(len(tasks_gt)):
-            tasks_gt[i].position_index = tasks_gt[i].position_index + 1
     optional_arg = []
 
     def set_optional(key: str):
@@ -347,9 +327,7 @@ def update_task(request, task_id: UUID):
     set_optional("owner")
     set_optional("assigned")
     set_optional("completed")
-    set_optional("position_index")
     task.save(update_fields=optional_arg)
-    Task.objects.bulk_update(tasks_gt, ["position_index"])
     task = Task.objects.get(pk=task.id)
     res = {
         "title": f"{task.title}",
@@ -362,7 +340,6 @@ def update_task(request, task_id: UUID):
         "owner": f"{task.owner.id}",
         "assigned": None if task.assigned is None else f"{task.assigned.id}",
         "completed": task.completed,
-        "position_index": task.position_index,
         "id": f"{task.id}",
     }
     return JsonResponse(res)
@@ -432,7 +409,7 @@ def update_board(request, board_id: UUID):
                 "completed": task.completed,
                 "id": f"{task.id}",
             }
-            for task in board.tasks.all().order_by("position_index")
+            for task in board.tasks.all()
         ],
         "archived": [
             {
@@ -520,7 +497,7 @@ def delete_member(request, board_id: UUID):
                 "completed": task.completed,
                 "id": f"{task.id}",
             }
-            for task in board.tasks.all().order_by("position_index")
+            for task in board.tasks.all()
         ],
         "archived": [
             {

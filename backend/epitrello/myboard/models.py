@@ -41,7 +41,6 @@ class Task(models.Model):
         null=True,
     )
     completed = models.BooleanField(default=False)
-    position_index = models.IntegerField()
 
 
 class Board(models.Model):
