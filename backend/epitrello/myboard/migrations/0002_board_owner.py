@@ -7,15 +7,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('myauth', '0002_alter_user_profile_picture'),
-        ('myboard', '0001_initial'),
+        ("myauth", "0002_alter_user_profile_picture"),
+        ("myboard", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='board',
-            name='owner',
-            field=models.ForeignKey(default=None, on_delete=django.db.models.deletion.CASCADE, related_name='board_owner_set', to='myauth.user'),
+            model_name="board",
+            name="owner",
+            field=models.ForeignKey(
+                default=None,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="board_owner_set",
+                to="myauth.user",
+            ),
             preserve_default=False,
         ),
     ]
