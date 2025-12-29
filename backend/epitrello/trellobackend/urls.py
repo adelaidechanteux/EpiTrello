@@ -39,4 +39,5 @@ urlpatterns = [
     ),
     path("update/task/<uuid:task_id>/", myboard_views.update_task),
     path("update/board/<uuid:board_id>/", myboard_views.update_board),
+    path("update/categories/<uuid:board_id>", myboard_views.update_categories),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

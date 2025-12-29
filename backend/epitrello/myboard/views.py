@@ -228,6 +228,10 @@ def create_task(request, board_id: UUID):
         print(f"{e}", file=sys.stderr)
         return HttpResponseServerError("Failed to save", content_type="text/plain")
     board.tasks.add(task)
+    categories = set(board.categories)
+    categories.add(f"{task.category}")
+    board.categories = list(categories)
+    board.save()
     res = {
         "title": f"{task.title}",
         "description": f"{task.description}",
@@ -329,6 +333,10 @@ def update_task(request, task_id: UUID):
     set_optional("completed")
     task.save(update_fields=optional_arg)
     task = Task.objects.get(pk=task.id)
+    categories = set(board.categories)
+    categories.add(f"{task.category}")
+    board.categories = list(categories)
+    board.save()
     res = {
         "title": f"{task.title}",
         "description": f"{task.description}",
@@ -518,3 +526,42 @@ def delete_member(request, board_id: UUID):
         "categories": [f"{x}" for x in board.categories.all()],
     }
     return JsonResponse(res)
+
+
+
+@csrf_exempt
+@require_http_methods(["PUT"])
+@require_logged
+def update_categories(request, board_id: UUID):
+    try:
+        board: Board = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        raise Http404("Board does not exists")
+    if request.content_type != "application/json":
+        return HttpResponseBadRequest(
+            "Content-Type must be 'application/json'", content_type="text/plain"
+        )
+    try:
+        POST = json.loads(request.body.decode())
+    except Exception as e:
+        print(f"{e}", file=sys.stderr)
+        return HttpResponseBadRequest(
+            f"Bad format for json body {e}", content_type="text/plain"
+        )
+    if "categories" not in POST:
+        return HttpResponseBadRequest(
+            "Missing 'categories' in body", content_type="text/plain"
+        )
+    if not isinstance(POST["categories"], list):
+        return HttpResponseBadRequest(
+            "Bad type for 'categories' in body", content_type="text/plain"
+        )
+    tasks = board.tasks.all()
+    for task in tasks:
+        if f"{task.category}" not in POST["categories"]:
+            return HttpResponseBadRequest(
+                f"Missing '{task.category}' in 'categories' body", content_type="text/plain"
+            )
+    categories = set(POST["categories"])
+    board.categories = list(categories)
+    board.save()

@@ -242,7 +242,6 @@ BODY:
     "owner": "task owner (user) id",
     "assigned": null, # or "task assignee (user) id"
     "completed": false,
-    "position_index": 0,
     "id": "task id"
 }
 ```
@@ -348,7 +347,6 @@ BODY:
     "owner": "task owner (user) id", # optional
     "assigned": "task assignee (user) id", # optional
     "completed": false, # optional
-    "position_index": 0 # optional
 }
 ```
 
@@ -366,7 +364,6 @@ BODY:
     "owner": "task owner (user) id",
     "assigned": null, # or "task assignee (user) id"
     "completed": false,
-    "position_index": 0,
     "id": "task id"
 }
 ```
@@ -554,3 +551,45 @@ BODY:
 
 - Board does not exists
 - User does not exists
+
+---
+
+## Update (Board) Categories
+
+METHOD: `PUT`
+PATH: `update/categories/<uuid:board_id>/`
+HEADERS:
+```json
+Authorization: Bearer jwt
+```
+BODY:
+```json
+{
+    "categories": ["task category", "done"]
+}
+```
+
+#### 200
+
+```json
+{
+    "categories": ["task category", "done"] # in order
+}
+```
+
+#### 400
+
+- Missing `Authorization` header
+- or, `Content-Type` header must be 'application/json'
+- or, Bad json format for body
+- or, Missing 'categories' in body
+- or, Bad type for 'categories' value
+- or, Missing category present in board's tasks
+
+#### 403
+
+- Google did not validate the authorization jwt
+
+#### 404
+
+- Board does not exists
