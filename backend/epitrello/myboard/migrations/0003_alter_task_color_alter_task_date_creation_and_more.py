@@ -7,28 +7,32 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('myboard', '0002_board_owner'),
+        ("myboard", "0002_board_owner"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='task',
-            name='color',
-            field=models.CharField(choices=[('#800080', 'Purple'), ('#FF69B4', 'Pink')], default='#800080', max_length=7),
+            model_name="task",
+            name="color",
+            field=models.CharField(
+                choices=[("#800080", "Purple"), ("#FF69B4", "Pink")],
+                default="#800080",
+                max_length=7,
+            ),
         ),
         migrations.AlterField(
-            model_name='task',
-            name='date_creation',
+            model_name="task",
+            name="date_creation",
             field=models.DateTimeField(default=datetime.datetime.now),
         ),
         migrations.AlterField(
-            model_name='task',
-            name='date_end',
+            model_name="task",
+            name="date_end",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='task',
-            name='date_start',
+            model_name="task",
+            name="date_start",
             field=models.DateTimeField(blank=True, null=True),
         ),
     ]

@@ -5,7 +5,11 @@ import json
 from django.views.decorators.csrf import csrf_exempt
 from django.http import Http404, JsonResponse
 from django.views.decorators.http import require_http_methods
-from django.http import HttpResponseBadRequest, HttpResponseForbidden, HttpResponseServerError
+from django.http import (
+    HttpResponseBadRequest,
+    HttpResponseForbidden,
+    HttpResponseServerError,
+)
 
 from myauth.middleware import require_logged
 from myauth.models import User
@@ -13,6 +17,7 @@ from myboard.models import Task, Board
 
 
 # Create your views here.
+
 
 @csrf_exempt
 @require_http_methods(["GET"])
@@ -22,16 +27,18 @@ def get_board(request, board_id: UUID):
         board: Board = Board.objects.get(pk=board_id)
     except Board.DoesNotExist:
         raise Http404("Board does not exist")
+    admins = [f"{x.id}" for x in board.admin.all()]
     res = {
         "title": f"{board.title}",
         "id": f"{board.id}",
-        "favorite": False, # TODO
+        "favorite": False,  # TODO
         "members": {
             f"{member.id}": {
                 "profile_picture": f"{member.profile_picture}",
                 "username": f"{member.username}",
                 "email": f"{member.email}",
                 "owner": member.id == board.owner.id,
+                "admin": f"{member.id}" in admins,
                 "id": f"{member.id}",
             }
             for member in board.members.all()
@@ -68,6 +75,7 @@ def get_board(request, board_id: UUID):
             }
             for task in board.archived.all()
         ],
+        "categories": [f"{x}" for x in board.categories.all()],
     }
     return JsonResponse(res)
 
@@ -77,22 +85,31 @@ def get_board(request, board_id: UUID):
 @require_logged
 def invit_board_id(request, board_id: UUID):
     if request.content_type != "application/json":
-        return HttpResponseBadRequest("Content-Type must be 'application/json'", content_type="text/plain")
+        return HttpResponseBadRequest(
+            "Content-Type must be 'application/json'", content_type="text/plain"
+        )
     try:
         POST = json.loads(request.body.decode())
     except Exception as e:
         print(f"{e}", file=sys.stderr)
-        return HttpResponseBadRequest(f"Bad format for json body {e}", content_type="text/plain")
+        return HttpResponseBadRequest(
+            f"Bad format for json body {e}", content_type="text/plain"
+        )
     email = POST.get("email")
     is_admin = POST.get("admin")
     if email is None or is_admin is None:
-        return HttpResponseBadRequest(f"Missing '{'email' if email is None else 'admin'}' in post body", content_type="text/plain")
+        return HttpResponseBadRequest(
+            f"Missing '{'email' if email is None else 'admin'}' in post body",
+            content_type="text/plain",
+        )
     try:
         board: Board = Board.objects.get(pk=board_id)
     except Board.DoesNotExist:
         raise Http404("Board does not exist")
     if f"{board.owner.id}" != request.session["member_id"]:
-        return HttpResponseForbidden("You are not the owner of the board", content_type="text/plain")
+        return HttpResponseForbidden(
+            "You are not the owner of the board", content_type="text/plain"
+        )
     try:
         user: User = User.objects.get(email=email)
     except User.DoesNotExist:
@@ -100,22 +117,31 @@ def invit_board_id(request, board_id: UUID):
     board.members.add(user)
     return JsonResponse({})
 
+
 @csrf_exempt
 @require_http_methods(["POST"])
 @require_logged
 def create_board(request):
     if request.content_type != "application/json":
-        return HttpResponseBadRequest("Content-Type must be 'application/json'", content_type="text/plain")
+        return HttpResponseBadRequest(
+            "Content-Type must be 'application/json'", content_type="text/plain"
+        )
     try:
         POST = json.loads(request.body.decode())
     except Exception as e:
         print(f"{e}", file=sys.stderr)
-        return HttpResponseBadRequest(f"Bad format for json body {e}", content_type="text/plain")
+        return HttpResponseBadRequest(
+            f"Bad format for json body {e}", content_type="text/plain"
+        )
     title = POST.get("title")
     if title is None:
-        return HttpResponseBadRequest("Missing 'title' in post body", content_type="text/plain")
+        return HttpResponseBadRequest(
+            "Missing 'title' in post body", content_type="text/plain"
+        )
     if len(title) >= 50:
-        return HttpResponseBadRequest("Too many characters in 'title' in post body", content_type="text/plain")
+        return HttpResponseBadRequest(
+            "Too many characters in 'title' in post body", content_type="text/plain"
+        )
     try:
         owner = User.objects.get(pk=request.session["member_id"])
     except User.DoesNotExist:
@@ -123,10 +149,9 @@ def create_board(request):
     board = Board(title=title, owner=owner)
     board.save()
     board.members.add(owner)
-    res = {
-        "id": f"{board.id}"
-    }
+    res = {"id": f"{board.id}"}
     return JsonResponse(res)
+
 
 @csrf_exempt
 @require_http_methods(["GET"])
@@ -137,7 +162,9 @@ def delete_board(request, board_id: UUID):
     except Board.DoesNotExist:
         raise Http404("Board does not exists")
     if f"{board.owner.id}" != request.session["member_id"]:
-        return HttpResponseForbidden("You are not the owner of the board", content_type="text/plain")
+        return HttpResponseForbidden(
+            "You are not the owner of the board", content_type="text/plain"
+        )
     board.delete()
     return JsonResponse({})
 
@@ -151,12 +178,16 @@ def create_task(request, board_id: UUID):
     except Board.DoesNotExist:
         raise Http404("Board does not exists")
     if request.content_type != "application/json":
-        return HttpResponseBadRequest("Content-Type must be 'application/json'", content_type="text/plain")
+        return HttpResponseBadRequest(
+            "Content-Type must be 'application/json'", content_type="text/plain"
+        )
     try:
         POST = json.loads(request.body.decode())
     except Exception as e:
         print(f"{e}", file=sys.stderr)
-        return HttpResponseBadRequest(f"Bad format for json body {e}", content_type="text/plain")
+        return HttpResponseBadRequest(
+            f"Bad format for json body {e}", content_type="text/plain"
+        )
     try:
         owner = User.objects.get(pk=request.session["member_id"])
     except User.DoesNotExist:
@@ -165,9 +196,15 @@ def create_task(request, board_id: UUID):
     description = POST.get("description")
     category = POST.get("category")
     if title is None or description is None or category is None:
-        return HttpResponseBadRequest("Missing one of 'title', 'description', or 'category'", content_type="text/plain")
+        return HttpResponseBadRequest(
+            "Missing one of 'title', 'description', or 'category'",
+            content_type="text/plain",
+        )
     if len(title) >= 50 or len(category) >= 30:
-        return HttpResponseBadRequest("Value of 'title' is more than 49 char or 'category' is more than 29", content_type="text/plain")
+        return HttpResponseBadRequest(
+            "Value of 'title' is more than 49 char or 'category' is more than 29",
+            content_type="text/plain",
+        )
     optional_arg = {}
     if "color" in POST:
         optional_arg["color"] = POST.get("color")
@@ -178,12 +215,22 @@ def create_task(request, board_id: UUID):
     if "assigned" in POST:
         optional_arg["assigned"] = POST.get("assigned")
     try:
-        task = Task(title=title, description=description, category=category, owner=owner, **optional_arg)
+        task = Task(
+            title=title,
+            description=description,
+            category=category,
+            owner=owner,
+            **optional_arg,
+        )
         task.save()
     except Exception as e:
         print(f"{e}", file=sys.stderr)
         return HttpResponseServerError("Failed to save", content_type="text/plain")
     board.tasks.add(task)
+    categories = set(board.categories)
+    categories.add(f"{task.category}")
+    board.categories = list(categories)
+    board.save()
     res = {
         "title": f"{task.title}",
         "description": f"{task.description}",
@@ -213,7 +260,9 @@ def delete_task(request, board_id: UUID, task_id: UUID):
     except Board.DoesNotExist:
         raise Http404("Board does not exists")
     if board.tasks.filter(pk=task_id).count() == 0:
-        return HttpResponseBadRequest("Task is not in the Board tasks", content_type="text/plain")
+        return HttpResponseBadRequest(
+            "Task is not in the Board tasks", content_type="text/plain"
+        )
     board.tasks.remove(task)
     board.archived.add(task)
     return JsonResponse({})
@@ -232,7 +281,9 @@ def deleteforce_task(request, board_id: UUID, task_id: UUID):
     except Board.DoesNotExist:
         raise Http404("Board does not exists")
     if board.archived.filter(pk=task_id).count() == 0:
-        return HttpResponseBadRequest("Task is not in the Board tasks", content_type="text/plain")
+        return HttpResponseBadRequest(
+            "Task is not in the Board tasks", content_type="text/plain"
+        )
     board.archived.remove(task)
     task.delete()
     return JsonResponse({})
@@ -247,21 +298,29 @@ def update_task(request, task_id: UUID):
     except Task.DoesNotExist:
         raise Http404("Task does not exists")
     if request.content_type != "application/json":
-        return HttpResponseBadRequest("Content-Type must be 'application/json'", content_type="text/plain")
+        return HttpResponseBadRequest(
+            "Content-Type must be 'application/json'", content_type="text/plain"
+        )
     try:
         POST = json.loads(request.body.decode())
     except Exception as e:
         print(f"{e}", file=sys.stderr)
-        return HttpResponseBadRequest(f"Bad format for json body {e}", content_type="text/plain")
+        return HttpResponseBadRequest(
+            f"Bad format for json body {e}", content_type="text/plain"
+        )
     if "owner" in POST and task.owner is not None:
         if POST["owner"] != f"{task.owner.id}":
             if request.session["member_id"] != f"{task.owner.id}":
-                return HttpResponseForbidden("Attempt to change owner but user is not the owner")
+                return HttpResponseForbidden(
+                    "Attempt to change owner but user is not the owner"
+                )
     optional_arg = []
+
     def set_optional(key: str):
         if key in POST:
             optional_arg.append(key)
             setattr(task, key, POST.get(key))
+
     set_optional("title")
     set_optional("description")
     set_optional("color")
@@ -273,6 +332,10 @@ def update_task(request, task_id: UUID):
     set_optional("completed")
     task.save(update_fields=optional_arg)
     task = Task.objects.get(pk=task.id)
+    categories = set(board.categories)
+    categories.add(f"{task.category}")
+    board.categories = list(categories)
+    board.save()
     res = {
         "title": f"{task.title}",
         "description": f"{task.description}",
@@ -290,7 +353,7 @@ def update_task(request, task_id: UUID):
 
 
 @csrf_exempt
-@require_http_methods(["POST"])
+@require_http_methods(["PUT"])
 @require_logged
 def update_board(request, board_id: UUID):
     try:
@@ -298,34 +361,43 @@ def update_board(request, board_id: UUID):
     except Board.DoesNotExist:
         raise Http404("Board does not exists")
     if request.content_type != "application/json":
-        return HttpResponseBadRequest("Content-Type must be 'application/json'", content_type="text/plain")
+        return HttpResponseBadRequest(
+            "Content-Type must be 'application/json'", content_type="text/plain"
+        )
     try:
         POST = json.loads(request.body.decode())
     except Exception as e:
         print(f"{e}", file=sys.stderr)
-        return HttpResponseBadRequest(f"Bad format for json body {e}", content_type="text/plain")
+        return HttpResponseBadRequest(
+            f"Bad format for json body {e}", content_type="text/plain"
+        )
     if "owner" in POST and board.owner is not None:
         if POST["owner"] != f"{board.owner.id}":
             if request.session["member_id"] != f"{board.owner.id}":
-                return HttpResponseForbidden("Attempt to change owner but user is not the owner")
+                return HttpResponseForbidden(
+                    "Attempt to change owner but user is not the owner"
+                )
     optional_arg = []
+
     def set_optional(key: str):
         if key in POST:
             optional_arg.append(key)
             setattr(board, key, POST.get(key))
+
     set_optional("title")
     set_optional("owner")
     board.save(update_fields=optional_arg)
     res = {
         "title": f"{board.title}",
         "id": f"{board.id}",
-        "favorite": False, # TODO
+        "favorite": False,  # TODO
         "members": {
             f"{member.id}": {
                 "profile_picture": f"{member.profile_picture}",
                 "username": f"{member.username}",
                 "email": f"{member.email}",
                 "owner": member.id == board.owner.id,
+                "admin": f"{member.id}" in admins,
                 "id": f"{member.id}",
             }
             for member in board.members.all()
@@ -362,6 +434,7 @@ def update_board(request, board_id: UUID):
             }
             for task in board.archived.all()
         ],
+        "categories": [f"{x}" for x in board.categories.all()],
     }
     return JsonResponse(res)
 
@@ -375,14 +448,20 @@ def delete_member(request, board_id: UUID):
     except Board.DoesNotExist:
         raise Http404("Board does not exists")
     if request.content_type != "application/json":
-        return HttpResponseBadRequest("Content-Type must be 'application/json'", content_type="text/plain")
+        return HttpResponseBadRequest(
+            "Content-Type must be 'application/json'", content_type="text/plain"
+        )
     try:
         POST = json.loads(request.body.decode())
     except Exception as e:
         print(f"{e}", file=sys.stderr)
-        return HttpResponseBadRequest(f"Bad format for json body {e}", content_type="text/plain")
+        return HttpResponseBadRequest(
+            f"Bad format for json body {e}", content_type="text/plain"
+        )
     if "email" not in POST:
-        return HttpResponseBadRequest("Missing 'email' in body", content_type="text/plain")
+        return HttpResponseBadRequest(
+            "Missing 'email' in body", content_type="text/plain"
+        )
     try:
         user = User.objects.get(email=POST["email"])
     except User.DoesNotExist:
@@ -392,18 +471,21 @@ def delete_member(request, board_id: UUID):
     except User.DoesNotExist:
         raise Http404("User session does not exists")
     if board.owner.id != session_member.id:
-        return HttpResponseForbidden("User is not the owner of the board", content_type="text/plain")
+        return HttpResponseForbidden(
+            "User is not the owner of the board", content_type="text/plain"
+        )
     board.members.remove(user)
     res = {
         "title": f"{board.title}",
         "id": f"{board.id}",
-        "favorite": False, # TODO
+        "favorite": False,  # TODO
         "members": {
             f"{member.id}": {
                 "profile_picture": f"{member.profile_picture}",
                 "username": f"{member.username}",
                 "email": f"{member.email}",
                 "owner": member.id == board.owner.id,
+                "admin": f"{member.id}" in admins,
                 "id": f"{member.id}",
             }
             for member in board.members.all()
@@ -440,5 +522,45 @@ def delete_member(request, board_id: UUID):
             }
             for task in board.archived.all()
         ],
+        "categories": [f"{x}" for x in board.categories.all()],
     }
     return JsonResponse(res)
+
+
+
+@csrf_exempt
+@require_http_methods(["PUT"])
+@require_logged
+def update_categories(request, board_id: UUID):
+    try:
+        board: Board = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        raise Http404("Board does not exists")
+    if request.content_type != "application/json":
+        return HttpResponseBadRequest(
+            "Content-Type must be 'application/json'", content_type="text/plain"
+        )
+    try:
+        POST = json.loads(request.body.decode())
+    except Exception as e:
+        print(f"{e}", file=sys.stderr)
+        return HttpResponseBadRequest(
+            f"Bad format for json body {e}", content_type="text/plain"
+        )
+    if "categories" not in POST:
+        return HttpResponseBadRequest(
+            "Missing 'categories' in body", content_type="text/plain"
+        )
+    if not isinstance(POST["categories"], list):
+        return HttpResponseBadRequest(
+            "Bad type for 'categories' in body", content_type="text/plain"
+        )
+    tasks = board.tasks.all()
+    for task in tasks:
+        if f"{task.category}" not in POST["categories"]:
+            return HttpResponseBadRequest(
+                f"Missing '{task.category}' in 'categories' body", content_type="text/plain"
+            )
+    categories = set(POST["categories"])
+    board.categories = list(categories)
+    board.save()

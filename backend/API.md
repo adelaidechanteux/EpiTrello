@@ -7,13 +7,13 @@
 METHOD: `POST`
 PATH: `user/login/`
 HEADERS:
-```
+```json
 Authorization: Bearer jwt
 ```
 
 #### 200
 
-```
+```json
 {
     "id": "user uuid",
     "username": "user username",
@@ -37,13 +37,13 @@ Google did not validate the authorization jwt
 METHOD: `GET`
 PATH: `/get/board/<uuid>`
 HEADERS:
-```
+```json
 Authorization: Bearer jwt
 ```
 
 #### 200
 
-```
+```json
 {
     "title": "some board title",
     "id": "board uuid",
@@ -54,6 +54,7 @@ Authorization: Bearer jwt
             "username": "member username",
             "email": "a@a.com",
             "owner": false,
+            "admin": false,
             "id": "member id"
         }
     },
@@ -86,7 +87,8 @@ Authorization: Bearer jwt
             "completed": false,
             "id": "task id"
         }
-    ]
+    ],
+    "categories": ["task category"]
 }
 ```
 
@@ -109,11 +111,11 @@ Board `uuid` does not exists
 METHOD: `POST`
 PATH: `invit/<uuid>`
 HEADERS:
-```
+```json
 Authorization: Bearer jwt
 ```
 BODY:
-```
+```json
 {
     "email": "a@a.com",
     "admin": false
@@ -122,7 +124,7 @@ BODY:
 
 #### 200
 
-```
+```json
 {}
 ```
 
@@ -147,11 +149,11 @@ BODY:
 METHOD: `POST`
 PATH: `create/board/`
 HEADERS:
-```
+```json
 Authorization: Bearer jwt
 ```
 BODY:
-```
+```json
 {
     "title": "some board title" # max 49 characters
 }
@@ -159,7 +161,7 @@ BODY:
 
 #### 200
 
-```
+```json
 {
     "id": "board uuid"
 }
@@ -180,13 +182,13 @@ Google did not validate the authorization jwt
 METHOD: `GET`
 PATH: `delete/board/<uuid>`
 HEADERS:
-```
+```json
 Authorization: Bearer jwt
 ```
 
 #### 200
 
-```
+```json
 {}
 ```
 
@@ -210,11 +212,11 @@ Board with uuid does not exists
 METHOD: `POST`
 PATH: `create/task/<uuid:board_id>`
 HEADERS:
-```
+```json
 Authorization: Bearer jwt
 ```
 BODY:
-```
+```json
 {
     "title": "task title", # max 49 characters
     "description": "task description",
@@ -228,7 +230,7 @@ BODY:
 
 #### 200
 
-```
+```json
 {
     "title": "task title",
     "description": "task description",
@@ -268,13 +270,13 @@ BODY:
 METHOD: `GET`
 PATH: `delete/task/<uuid:board_id>/<uuid_task_id>/`
 HEADERS:
-```
+```json
 Authorization: Bearer jwt
 ```
 
 #### 200
 
-```
+```json
 {}
 ```
 
@@ -299,13 +301,13 @@ Authorization: Bearer jwt
 METHOD: `GET`
 PATH: `deleteforce/task/<uuid:board_id>/<uuid:task_id>/`
 HEADERS:
-```
+```json
 Authorization: Bearer jwt
 ```
 
 #### 200
 
-```
+```json
 {}
 ```
 
@@ -330,11 +332,11 @@ Authorization: Bearer jwt
 METHOD: `PUT`
 PATH: `update/task/<uuid:task_id>/`
 HEADERS:
-```
+```json
 Authorization: Bearer jwt
 ```
 BODY:
-```
+```json
 {
     "title": "task title", # max 49 characters # optional
     "description": "task description", # optional
@@ -344,13 +346,13 @@ BODY:
     "date_end": "2025-12-16 14:52:42.726993", # optional
     "owner": "task owner (user) id", # optional
     "assigned": "task assignee (user) id", # optional
-    "completed": false # optional
+    "completed": false, # optional
 }
 ```
 
 #### 200
 
-```
+```json
 {
     "title": "task title",
     "description": "task description",
@@ -383,24 +385,25 @@ Task does not exists
 
 ---
 
-## Remove Member
+## Update Board
 
-METHOD: `POST`
-PATH: `delete/member/<uuid:board_id>/`
+METHOD: `PUT`
+PATH: `update/board/<uuid:board_id>/`
 HEADERS:
-```
+```json
 Authorization: Bearer jwt
 ```
 BODY:
-```
+```json
 {
-    "email": "a@a.com"
+    "title": "board title", # optional
+    "owner": "user id" # optional
 }
 ```
 
 #### 200
 
-```
+```json
 {
     "title": "some board title",
     "id": "board uuid",
@@ -411,6 +414,7 @@ BODY:
             "username": "member username",
             "email": "a@a.com",
             "owner": false,
+            "admin": false,
             "id": "member id"
         }
     },
@@ -443,7 +447,91 @@ BODY:
             "completed": false,
             "id": "task id"
         }
-    ]
+    ],
+    "categories": ["task category"]
+}
+```
+
+#### 400
+
+- Missing `Authorization` header
+- or, `Content-Type` header must be 'application/json'
+- or, Bad json format for body
+
+#### 403
+
+- Google did not validate the authorization jwt
+- or, Owner is not the connected user
+
+#### 404
+
+- Board does not exists
+
+---
+
+## Remove Member
+
+METHOD: `POST`
+PATH: `delete/member/<uuid:board_id>/`
+HEADERS:
+```json
+Authorization: Bearer jwt
+```
+BODY:
+```json
+{
+    "email": "a@a.com"
+}
+```
+
+#### 200
+
+```json
+{
+    "title": "some board title",
+    "id": "board uuid",
+    "favorite": false,
+    "members": {
+        "member uuid": {
+            "profile_picture": "profile picture uri",
+            "username": "member username",
+            "email": "a@a.com",
+            "owner": false,
+            "admin": false,
+            "id": "member id"
+        }
+    },
+    "tasks": [ # in order
+        {
+            "title": "task title",
+            "description": "task description",
+            "color": "task color as Hexadecimal",
+            "category": "task category",
+            "date_start": null, # or "2025-12-16 14:52:42.726993"
+            "date_end": null, # or "2025-12-16 14:52:42.726993"
+            "date_creation": "2025-12-16 14:52:42.726993",
+            "owner": "task owner (user) id",
+            "assigned": null, # or "task assignee (user) id"
+            "completed": false,
+            "id": "task id"
+        }
+    ],
+    "archived": [
+        {
+            "title": "task title",
+            "description": "task description",
+            "color": "task color as Hexadecimal",
+            "category": "task category",
+            "date_start": null, # or "2025-12-16 14:52:42.726993"
+            "date_end": null, # or "2025-12-16 14:52:42.726993"
+            "date_creation": "2025-12-16 14:52:42.726993",
+            "owner": "task owner (user) id",
+            "assigned": null, # or "task assignee (user) id"
+            "completed": false,
+            "id": "task id"
+        }
+    ],
+    "categories": ["task category"] # in order
 }
 ```
 
@@ -463,3 +551,45 @@ BODY:
 
 - Board does not exists
 - User does not exists
+
+---
+
+## Update (Board) Categories
+
+METHOD: `PUT`
+PATH: `update/categories/<uuid:board_id>/`
+HEADERS:
+```json
+Authorization: Bearer jwt
+```
+BODY:
+```json
+{
+    "categories": ["task category", "done"]
+}
+```
+
+#### 200
+
+```json
+{
+    "categories": ["task category", "done"] # in order
+}
+```
+
+#### 400
+
+- Missing `Authorization` header
+- or, `Content-Type` header must be 'application/json'
+- or, Bad json format for body
+- or, Missing 'categories' in body
+- or, Bad type for 'categories' value
+- or, Missing category present in board's tasks
+
+#### 403
+
+- Google did not validate the authorization jwt
+
+#### 404
+
+- Board does not exists
