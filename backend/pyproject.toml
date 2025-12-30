@@ -12,10 +12,6 @@ dependencies = [
     "google-auth>=2.42.1",
     "psycopg[binary]>=3.3.2",
     "requests>=2.32.5",
-]
-
-[dependency-groups]
-dev = [
     "django-stubs[compatible-mypy]>=5.2.8",
 ]
 

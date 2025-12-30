@@ -38,12 +38,26 @@ class OUTTaskSchema(Schema):
     description: str
     color: str
     category: str
-    date_start: str
-    date_end: str
+    date_start: str | None
+    date_end: str | None
     date_creation: str
     owner: OUTMemberSchema | None
     assigned: OUTMemberSchema | None
     completed: bool
+
+    @staticmethod
+    def resolve_date_start(obj: Task):
+        if obj.date_start:
+            return f"{obj.date_start}"
+        return
+    @staticmethod
+    def resolve_date_end(obj: Task):
+        if obj.date_end:
+            return f"{obj.date_end}"
+        return
+    @staticmethod
+    def resolve_date_creation(obj: Task):
+        return f"{obj.date_creation}"
 
 
 class OUTBoardSchema(Schema):
@@ -116,7 +130,7 @@ def create_board(request: HttpRequest, body: InCreateBoardSchema):
 
 @api.put("/delete/board/{board_id}/", response={200: OUTOKSchema, 403: OUTError, 404: OUTError})
 @decorate_view(require_logged)
-def create_board(request: HttpRequest, board_id: UUID):
+def delete_board(request: HttpRequest, board_id: UUID):
     try:
         board: Board = Board.objects.get(pk=board_id)
     except Board.DoesNotExist:
@@ -132,10 +146,10 @@ class InCreateTask(Schema):
     title: str
     description: str
     category: str
-    color: str | None
-    date_start: str | None
-    date_end: str | None
-    assigned: str | None
+    color: str | None = None
+    date_start: str | None = None
+    date_end: str | None = None
+    assigned: str | None = None
 
 @api.post("create/task/{board_id}/", response={200: OUTTaskSchema, 400: OUTError, 403: OUTError,  404: OUTError})
 @decorate_view(require_logged)
@@ -154,7 +168,7 @@ def create_task(request: HttpRequest, board_id: UUID, body: InCreateTask):
     if len(body.title) >= 50 or len(body.category) >= 30:
         return OUTERROR_BadValue
     optional_arg = {}
-    for key in ("color", "date_start", "dtate_end", "assigned"):
+    for key in ("color", "date_start", "date_end", "assigned"):
         if getattr(body, key) is not None:
             optional_arg[key] = getattr(body, key)
     task = Task(
