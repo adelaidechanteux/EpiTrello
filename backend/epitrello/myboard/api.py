@@ -238,15 +238,15 @@ def deleteforce_task(request: HttpRequest, board_id: UUID, task_id: UUID):
 
 
 class InUpdateTask(Schema):
-    title: str | None
-    description: str | None
-    color: str | None
-    category: str | None
-    date_start: str | None
-    date_end: str | None
-    owner: str | None
-    assigned: str | None
-    completed: bool | None
+    title: str | None = None
+    description: str | None = None
+    color: str | None = None
+    category: str | None = None
+    date_start: str | None = None
+    date_end: str | None = None
+    owner: str | None = None
+    assigned: str | None = None
+    completed: bool | None = None
 
 
 @api.put("/update/task/{board_id}/{task_id}/", response={200: OUTTaskSchema, 403: OUTError, 404: OUTError})
