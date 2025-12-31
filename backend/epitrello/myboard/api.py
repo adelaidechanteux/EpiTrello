@@ -86,6 +86,33 @@ def get_board(request: HttpRequest, board_id: UUID):
     return board
 
 
+class OUTBoardMinSchema(Schema):
+    id: UUID
+    title: str
+
+
+class OUTBoardsMinSchema(Schema):
+    boards: list[OUTBoardMinSchema]
+    owned: list[OUTBoardMinSchema]
+    favorite: list[OUTBoardMinSchema]
+    admin: list[OUTBoardMinSchema]
+
+
+@api.get("/boards/", response={200: OUTBoardsMinSchema})
+@decorate_view(require_logged)
+def board_member(request: HttpRequest):
+    try:
+        user = User.objects.get(pk=request.session["member_id"])
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    return {
+        "boards": user.board_set.all().distinct(),
+        "owned": user.board_owner_set.all().distinct(),
+        "admin": user.board_admin_set.all().distinct(),
+        "favorite": user.board_favorite_set.all().distinct(),
+    }
+
+
 class InInvitBoardSchema(Schema):
     email: str
     admin: bool

@@ -34,6 +34,27 @@ class MyBoardTest(TestCase):
         board = Board.objects.get(pk=res["id"])
         self.assertEqual(res["owner"]["id"], f"{board.owner.id}", f"Bad board owner id |{res}")
 
+    def test_board_members(self):
+        title = "Test Board b1"
+        title2 = "Test Board b2"
+        #
+        response = self.c1.post("/v2/create/board/", data={"title": title}, follow=True, content_type="application/json")
+        self.assertEqual(200, response.status_code, f"{response.text} | {response.status_code} | {response.headers}")
+        res = response.json()
+        #
+        response1 = self.c1.post("/v2/create/board/", data={"title": title2}, follow=True, content_type="application/json")
+        self.assertEqual(200, response1.status_code, f"{response1.text} | {response1.status_code} | {response1.headers}")
+        res1 = response1.json()
+        #
+        response2 = self.c1.get("/v2/boards/", follow=True)
+        self.assertEqual(200, response2.status_code, f"{response2.text} | {response2.status_code} | {response2.headers}")
+        res2 = response2.json()
+        self.assertEqual(2, len(res2.get("boards")), f"{res2}")
+        self.assertEqual(2, len(res2.get("owned")), f"{res2}")
+        self.assertEqual(0, len(res2.get("favorite")), f"{res2}")
+        self.assertEqual(0, len(res2.get("admin")), f"{res2}")
+
+
     def test_delete_board(self):
         title = "Test Board 2"
         #
