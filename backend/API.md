@@ -1,5 +1,8 @@
 # Epitrello backend api
 
+> A swagger is now available for the new api version.
+> '/v2/docs'
+
 ---
 
 ## Login
