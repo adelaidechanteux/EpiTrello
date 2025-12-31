@@ -191,15 +191,15 @@ def create_task(request: HttpRequest, board_id: UUID, body: InCreateTask):
 @decorate_view(require_logged)
 def delete_task(request: HttpRequest, board_id: UUID, task_id: UUID):
     try:
-        board: Board = Board.objects.get(pk=board_id)
+        board = Board.objects.get(pk=board_id)
     except Board.DoesNotExist:
         return OUTERROR_BoardDoesNotExists
     try:
-        task: Task = Task.objects.get(pk=task_id)
+        task = Task.objects.get(pk=task_id)
     except Task.DoesNotExist:
         return OUTERROR_TaskDoesNotExists
     try:
-        user: User = User.objects.get(pk=request.session["member_id"])
+        user = User.objects.get(pk=request.session["member_id"])
     except User.DoesNotExist:
         return OUTERROR_UserDoesNotExists
     permissions = [f"{x.id}" for x in board.members.all()]
@@ -283,11 +283,11 @@ def update_task(request: HttpRequest, board_id: UUID, task_id: UUID, body: InUpd
 
 
 class InUpdateBoard(Schema):
-    title: str
-    owner: str
+    title: str | None = None
+    owner: str | None = None
 
 
-@api.put("/update/board/{board_id}", response={200: OUTBoardSchema, 400: OUTError, 403: OUTError, 404: OUTError})
+@api.put("/update/board/{board_id}/", response={200: OUTBoardSchema, 400: OUTError, 403: OUTError, 404: OUTError})
 @decorate_view(require_logged)
 def update_board(request: HttpRequest, board_id: UUID, body: InUpdateBoard):
     try:
@@ -295,13 +295,13 @@ def update_board(request: HttpRequest, board_id: UUID, body: InUpdateBoard):
     except Board.DoesNotExist:
         return OUTERROR_BoardDoesNotExists
     try:
-        user: User = User.objects.get(pk=request.session["member_id"])
+        user = User.objects.get(pk=request.session["member_id"])
     except User.DoesNotExist:
         return OUTERROR_UserDoesNotExists
     permissions = [f"{x.id}" for x in board.admin.all()] + [f"{board.owner.id}"]
     if f"{user.id}" not in permissions:
         return OUTERROR_MissingPermission
-    if "owner" in body.owner:
+    if body.owner is not None:
         if body.owner != f"{board.owner.id}":
             if request.session["member_id"] != f"{board.owner.id}":
                 return OUTERROR_MissingPermission
@@ -355,7 +355,7 @@ class InUpdateCategory(Schema):
     categories: list[str]
 
 
-@api.put("/update/categories/{board_id}")
+@api.put("/update/categories/{board_id}/", response={200: OUTBoardSchema, 400: OUTError, 404: OUTError})
 @decorate_view(require_logged)
 def update_categories(request: HttpRequest, board_id: UUID, body: InUpdateCategory):
     try:
