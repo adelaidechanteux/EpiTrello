@@ -2,6 +2,7 @@ from django.utils import timezone
 from django.contrib.postgres.fields import ArrayField
 import uuid
 from django.db import models
+from typing import final
 
 from myauth.models import User
 
@@ -15,6 +16,7 @@ COLOR_CHOICES = [
 CATEGORY_LENGTH = 30
 
 
+@final
 class Task(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=50)
@@ -43,6 +45,7 @@ class Task(models.Model):
     completed = models.BooleanField(default=False)
 
 
+@final
 class Board(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=50)
