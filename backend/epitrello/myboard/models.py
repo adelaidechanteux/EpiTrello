@@ -57,3 +57,4 @@ class Board(models.Model):
     )
     categories = ArrayField(models.CharField(max_length=CATEGORY_LENGTH), default=list)
     admin = models.ManyToManyField(to=User, related_name="board_admin_set")
+    user_favorite = models.ManyToManyField(to=User, related_name="board_favorite_set")
