@@ -33,7 +33,7 @@ services:
   #     ENVIRON: "test"
   #   depends_on:
   #     - "database"
-  #   command: "./manage.py test"
+  #   command: "sh -c './manage.py migrate | ./manage.py test'"
   #   restart: "no"
   backend_proxy:
     build:

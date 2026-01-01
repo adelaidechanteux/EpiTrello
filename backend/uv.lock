@@ -73,6 +73,7 @@ dependencies = [
     { name = "django" },
     { name = "django-cors-headers" },
     { name = "django-ninja" },
+    { name = "django-ordered-model" },
     { name = "django-stubs", extra = ["compatible-mypy"] },
     { name = "google-auth" },
     { name = "psycopg", extra = ["binary"] },
@@ -85,6 +86,7 @@ requires-dist = [
     { name = "django", specifier = ">=5.2.7" },
     { name = "django-cors-headers", specifier = ">=4.9.0" },
     { name = "django-ninja", specifier = ">=1.5.1" },
+    { name = "django-ordered-model", specifier = ">=3.8.0a0" },
     { name = "django-stubs", extras = ["compatible-mypy"], specifier = ">=5.2.8" },
     { name = "google-auth", specifier = ">=2.42.1" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3.2" },
@@ -337,6 +339,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/42/8e/10b4299aa37017bb026ae091b2192d05b3d4b78a9dc57d59c4f362551907/django_ninja-1.5.1.tar.gz", hash = "sha256:6acda68a64d60934c6fdccb4d97c3ac7f02cfefd78a5d87ae053effe081b17c7", size = 3719868, upload-time = "2025-12-04T11:35:46.615Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0a/fc/124c3f999fbc77680777ff331ac9552227d7a6753639ef66dbba780fc6b4/django_ninja-1.5.1-py3-none-any.whl", hash = "sha256:135aaa1117dce8dfd7a1e80b4487a8cccee3a4182c3c8b562d08ea94e4d2cbdf", size = 2426577, upload-time = "2025-12-04T11:35:44.656Z" },
+]
+
+[[package]]
+name = "django-ordered-model"
+version = "3.8.0a0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e3/a1/57d4487e974eea66945b4793446bf3a95e2c6bb835c8b39b3121fa39b5a4/django_ordered_model-3.8.0a0.tar.gz", hash = "sha256:18250161e4eb64c18c91a27b0b080fbae9c4382aab34714e5dc2567a750a3225", size = 206793, upload-time = "2024-11-01T11:20:43.421Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/31/b8/9a02ba2eaab6fb3e7f93f965795457195a486dd3cd7de6946e4e0eeabea9/django_ordered_model-3.8.0a0-py3-none-any.whl", hash = "sha256:8f3194dac50460aa749d12693fd755675cd0a1d790937281892a1631cce8cf7f", size = 22057, upload-time = "2024-11-01T11:20:42.061Z" },
 ]
 
 [[package]]
