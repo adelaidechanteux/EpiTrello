@@ -288,3 +288,39 @@ class MyBoardTest(TestCase):
         self.assertEqual(t3_category, task3.category, f"Bad task category {res3}")
         #
         self.assertEqual(task2.id, task3.id, f"Bad task selected | {task2.id} | {task3.id}")
+
+    def test_update_task_order(self):
+        title = "Test Board 3"
+        t_title = "fix bug 1"
+        t3_title = "fix bug 2"
+        t_description = ""
+        t3_description = "adfsafd"
+        t_category = "ToDo"
+        t3_category = "Abcd"
+        #
+        response = self.c1.post("/v2/create/board/", data={"title": title}, follow=True, content_type="application/json")
+        self.assertEqual(200, response.status_code, f"Creation of board failed | {response.text} | {response.status_code} | {response.headers}")
+        res = response.json()
+        #
+        response2 = self.c1.post(f"/v2/create/task/{res['id']}/", data={"title": t_title, "description": t_description, "category": t_category}, follow=True, content_type="application/json")
+        self.assertEqual(200, response2.status_code, f"Creation of task failed | {response2.text} | {response2.status_code} | {response2.headers}")
+        res2 = response2.json()
+        #
+        response3 = self.c1.post(f"/v2/create/task/{res['id']}/", data={"title": t3_title, "description": t3_description, "category": t3_category}, follow=True, content_type="application/json")
+        self.assertEqual(200, response3.status_code, f"Creation of task failed | {response3.text} | {response3.status_code} | {response3.headers}")
+        res3 = response3.json()
+        #
+        response4 = self.c1.get(f"/v2/get/board/{res['id']}/", follow=True)
+        self.assertEqual(200, response4.status_code, f"Get board failed | {response4.text} | {response4.status_code} | {response4.headers}")
+        res4 = response4.json()
+        self.assertEqual(res2["id"], res4["tasks"][0]["id"], f"Order Failed | {res4}")
+        self.assertEqual(res3["id"], res4["tasks"][1]["id"], f"Order Failed | {res4}")
+        #
+        response5 = self.c1.put(f"/v2/update/task/{res['id']}/{res2['id']}/", data={"order": 1}, follow=True, content_type="application/json")
+        self.assertEqual(200, response5.status_code, f"Update task failed | {response5.text} | {response5.status_code} | {response5.headers}")
+        #
+        response6 = self.c1.get(f"/v2/get/board/{res['id']}/", follow=True)
+        self.assertEqual(200, response6.status_code, f"Get board failed | {response6.text} | {response6.status_code} | {response6.headers}")
+        res6 = response6.json()
+        self.assertEqual(res3["id"], res6["tasks"][0]["id"], f"Order Failed | {res6}")
+        self.assertEqual(res2["id"], res6["tasks"][1]["id"], f"Order Failed | {res6}")

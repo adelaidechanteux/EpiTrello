@@ -41,7 +41,7 @@ class OUTTaskSchema(Schema):
     date_start: str | None
     date_end: str | None
     date_creation: str
-    owner: OUTMemberSchema | None
+    owner: OUTMemberSchema
     assigned: OUTMemberSchema | None
     completed: bool
 
@@ -274,6 +274,7 @@ class InUpdateTask(Schema):
     owner: str | None = None
     assigned: str | None = None
     completed: bool | None = None
+    order: int | None = None
 
 
 @api.put("/update/task/{board_id}/{task_id}/", response={200: OUTTaskSchema, 403: OUTError, 404: OUTError})
@@ -299,7 +300,10 @@ def update_task(request: HttpRequest, board_id: UUID, task_id: UUID, body: InUpd
         if getattr(body, key) is not None:
             setattr(task, key, getattr(body, key))
             optional_arg.append(key)
-    task.save(update_fields=optional_arg)
+    if len(optional_arg) != 0:
+        task.save(update_fields=optional_arg)
+    if body.order is not None:
+        task.boardtasksthroughmodel_set.all().first().to(body.order)
     task = Task.objects.get(pk=task.id)
     old_category = board.categories
     new_category = list(OrderedDict.fromkeys(board.categories + [f"{task.category}"]))
