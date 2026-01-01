@@ -1,15 +1,14 @@
 from uuid import UUID
-from ninja import NinjaAPI, Schema
-from ninja.decorators import decorate_view
+from ninja import Router, Schema
 from django.http import HttpRequest, HttpResponse
 from collections import OrderedDict
 
 from myboard.models import Board, Task
 from myauth.models import User
-from myauth.middleware import require_logged
+from myauth.api import AUTH_CHECKS
 
 
-api = NinjaAPI()
+router = Router(auth=AUTH_CHECKS, tags=["board"])
 
 
 class OUTError(Schema):
@@ -76,8 +75,7 @@ class OUTOKSchema(Schema):
     ok: bool = True
 
 
-@api.get("/get/board/{board_id}/", response={200: OUTBoardSchema, 404: OUTError})
-@decorate_view(require_logged)
+@router.get("/get/board/{board_id}/", response={200: OUTBoardSchema, 404: OUTError})
 def get_board(request: HttpRequest, board_id: UUID):
     try:
         board = Board.objects.get(pk=board_id)
@@ -98,8 +96,7 @@ class OUTBoardsMinSchema(Schema):
     admin: list[OUTBoardMinSchema]
 
 
-@api.get("/boards/", response={200: OUTBoardsMinSchema})
-@decorate_view(require_logged)
+@router.get("/boards/", response={200: OUTBoardsMinSchema})
 def board_member(request: HttpRequest):
     try:
         user = User.objects.get(pk=request.session["member_id"])
@@ -118,8 +115,7 @@ class InInvitBoardSchema(Schema):
     admin: bool
 
 
-@api.post("/invit/board/{board_id}/", response={200: OUTOKSchema, 403: OUTError, 404: OUTError})
-@decorate_view(require_logged)
+@router.post("/invit/board/{board_id}/", response={200: OUTOKSchema, 403: OUTError, 404: OUTError})
 def invit_board(request: HttpRequest, board_id: UUID, body: InInvitBoardSchema):
     try:
         board = Board.objects.get(pk=board_id)
@@ -140,8 +136,7 @@ def invit_board(request: HttpRequest, board_id: UUID, body: InInvitBoardSchema):
 class InCreateBoardSchema(Schema):
     title: str
 
-@api.post("/create/board/", response={200: OUTBoardSchema, 400: OUTError, 404: OUTError})
-@decorate_view(require_logged)
+@router.post("/create/board/", response={200: OUTBoardSchema, 400: OUTError, 404: OUTError})
 def create_board(request: HttpRequest, body: InCreateBoardSchema):
     try:
         user: User = User.objects.get(pk=request.session["member_id"])
@@ -155,8 +150,7 @@ def create_board(request: HttpRequest, body: InCreateBoardSchema):
     return board
 
 
-@api.put("/delete/board/{board_id}/", response={200: OUTOKSchema, 403: OUTError, 404: OUTError})
-@decorate_view(require_logged)
+@router.put("/delete/board/{board_id}/", response={200: OUTOKSchema, 403: OUTError, 404: OUTError})
 def delete_board(request: HttpRequest, board_id: UUID):
     try:
         board: Board = Board.objects.get(pk=board_id)
@@ -178,8 +172,7 @@ class InCreateTask(Schema):
     date_end: str | None = None
     assigned: str | None = None
 
-@api.post("create/task/{board_id}/", response={200: OUTTaskSchema, 400: OUTError, 403: OUTError,  404: OUTError})
-@decorate_view(require_logged)
+@router.post("create/task/{board_id}/", response={200: OUTTaskSchema, 400: OUTError, 403: OUTError,  404: OUTError})
 def create_task(request: HttpRequest, board_id: UUID, body: InCreateTask):
     try:
         board: Board = Board.objects.get(pk=board_id)
@@ -214,8 +207,7 @@ def create_task(request: HttpRequest, board_id: UUID, body: InCreateTask):
     return task
 
 
-@api.put("/delete/task/{board_id}/{task_id}/", response={200: OUTOKSchema, 400: OUTError, 403: OUTError, 404: OUTError})
-@decorate_view(require_logged)
+@router.put("/delete/task/{board_id}/{task_id}/", response={200: OUTOKSchema, 400: OUTError, 403: OUTError, 404: OUTError})
 def delete_task(request: HttpRequest, board_id: UUID, task_id: UUID):
     try:
         board = Board.objects.get(pk=board_id)
@@ -239,8 +231,7 @@ def delete_task(request: HttpRequest, board_id: UUID, task_id: UUID):
     return {}
 
 
-@api.put("/deleteforce/task/{board_id}/{task_id}/", response={200: OUTOKSchema, 400: OUTError, 403: OUTError, 404: OUTError})
-@decorate_view(require_logged)
+@router.put("/deleteforce/task/{board_id}/{task_id}/", response={200: OUTOKSchema, 400: OUTError, 403: OUTError, 404: OUTError})
 def deleteforce_task(request: HttpRequest, board_id: UUID, task_id: UUID):
     try:
         board: Board = Board.objects.get(pk=board_id)
@@ -277,8 +268,7 @@ class InUpdateTask(Schema):
     order: int | None = None
 
 
-@api.put("/update/task/{board_id}/{task_id}/", response={200: OUTTaskSchema, 403: OUTError, 404: OUTError})
-@decorate_view(require_logged)
+@router.put("/update/task/{board_id}/{task_id}/", response={200: OUTTaskSchema, 403: OUTError, 404: OUTError})
 def update_task(request: HttpRequest, board_id: UUID, task_id: UUID, body: InUpdateTask):
     try:
         board: Board = Board.objects.get(pk=board_id)
@@ -318,8 +308,7 @@ class InUpdateBoard(Schema):
     owner: str | None = None
 
 
-@api.put("/update/board/{board_id}/", response={200: OUTBoardSchema, 400: OUTError, 403: OUTError, 404: OUTError})
-@decorate_view(require_logged)
+@router.put("/update/board/{board_id}/", response={200: OUTBoardSchema, 400: OUTError, 403: OUTError, 404: OUTError})
 def update_board(request: HttpRequest, board_id: UUID, body: InUpdateBoard):
     try:
         board = Board.objects.get(pk=board_id)
@@ -353,8 +342,7 @@ class InDeleteMember(Schema):
     email: str
 
 
-@api.put("/delete/member/{board_id}/", response={200: OUTBoardSchema, 400: OUTError, 403: OUTError, 404: OUTError})
-@decorate_view(require_logged)
+@router.put("/delete/member/{board_id}/", response={200: OUTBoardSchema, 400: OUTError, 403: OUTError, 404: OUTError})
 def delete_member(request: HttpRequest, board_id: UUID, body: InDeleteMember):
     try:
         board = Board.objects.get(pk=board_id)
@@ -386,8 +374,7 @@ class InUpdateCategory(Schema):
     categories: list[str]
 
 
-@api.put("/update/categories/{board_id}/", response={200: OUTBoardSchema, 400: OUTError, 404: OUTError})
-@decorate_view(require_logged)
+@router.put("/update/categories/{board_id}/", response={200: OUTBoardSchema, 400: OUTError, 404: OUTError})
 def update_categories(request: HttpRequest, board_id: UUID, body: InUpdateCategory):
     try:
         board = Board.objects.get(pk=board_id)

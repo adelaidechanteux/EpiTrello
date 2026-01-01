@@ -19,27 +19,9 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
-from myauth import views as myauth_views
-from myboard import views as myboard_views
-from myboard.api import api
+from trellobackend.api import api
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("user/login/", myauth_views.user_login),
-    path("board/<uuid:id>/", myboard_views.get_board),  # same as '/get/board/<>'
-    path("invit/<uuid:id>/", myboard_views.invit_board_id),
-    path("get/board/<uuid:board_id>/", myboard_views.get_board),  # same as '/board/<>'
-    path("create/board/", myboard_views.create_board),
-    path("create/task/<uuid:board_id>/", myboard_views.create_task),
-    path("delete/board/<uuid:board_id>/", myboard_views.delete_board),
-    path("delete/task/<uuid:board_id>/<uuid:task_id>/", myboard_views.delete_task),
-    path("delete/member/<uuid:board_id>/", myboard_views.delete_member),
-    path(
-        "deleteforce/task/<uuid:board_id>/<uuid:task_id>/",
-        myboard_views.deleteforce_task,
-    ),
-    path("update/task/<uuid:task_id>/", myboard_views.update_task),
-    path("update/board/<uuid:board_id>/", myboard_views.update_board),
-    path("update/categories/<uuid:board_id>", myboard_views.update_categories),
     path("v2/", api.urls),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

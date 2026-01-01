@@ -27,7 +27,7 @@ class MyBoardTest(TestCase):
     def test_create_board(self):
         title = "Test Board 1"
         #
-        response = self.c1.post("/v2/create/board/", data={"title": title}, follow=True, content_type="application/json")
+        response = self.c1.post("/v2/board/create/board/", data={"title": title}, follow=True, content_type="application/json")
         self.assertEqual(200, response.status_code, f"{response.text} | {response.status_code} | {response.headers}")
         res = response.json()
         self.assertEqual(title, res.get("title"), f"Bad board title | {res}")
@@ -38,15 +38,15 @@ class MyBoardTest(TestCase):
         title = "Test Board b1"
         title2 = "Test Board b2"
         #
-        response = self.c1.post("/v2/create/board/", data={"title": title}, follow=True, content_type="application/json")
+        response = self.c1.post("/v2/board/create/board/", data={"title": title}, follow=True, content_type="application/json")
         self.assertEqual(200, response.status_code, f"{response.text} | {response.status_code} | {response.headers}")
         res = response.json()
         #
-        response1 = self.c1.post("/v2/create/board/", data={"title": title2}, follow=True, content_type="application/json")
+        response1 = self.c1.post("/v2/board/create/board/", data={"title": title2}, follow=True, content_type="application/json")
         self.assertEqual(200, response1.status_code, f"{response1.text} | {response1.status_code} | {response1.headers}")
         res1 = response1.json()
         #
-        response2 = self.c1.get("/v2/boards/", follow=True)
+        response2 = self.c1.get("/v2/board/boards/", follow=True)
         self.assertEqual(200, response2.status_code, f"{response2.text} | {response2.status_code} | {response2.headers}")
         res2 = response2.json()
         self.assertEqual(2, len(res2.get("boards")), f"{res2}")
@@ -58,12 +58,12 @@ class MyBoardTest(TestCase):
     def test_delete_board(self):
         title = "Test Board 2"
         #
-        response = self.c1.post("/v2/create/board/", data={"title": title}, follow=True, content_type="application/json")
+        response = self.c1.post("/v2/board/create/board/", data={"title": title}, follow=True, content_type="application/json")
         self.assertEqual(200, response.status_code, f"Creation of board failed | {response.text} | {response.status_code} | {response.headers}")
         res = response.json()
         self.assertEqual(1, Board.objects.all().distinct().count(), "Number of board is not correct")
         #
-        response2 = self.c1.put(f"/v2/delete/board/{res['id']}/", follow=True, content_type="application/json")
+        response2 = self.c1.put(f"/v2/board/delete/board/{res['id']}/", follow=True, content_type="application/json")
         self.assertEqual(200, response2.status_code, f"Deletion of board failed | {response2.text} | {response2.status_code} | {response2.headers}")
         self.assertEqual(0, Board.objects.all().distinct().count(), "Number of board is not correct")
 
@@ -71,14 +71,14 @@ class MyBoardTest(TestCase):
         title = "Test Board a"
         title2 = "Test Board b"
         #
-        response = self.c1.post("/v2/create/board/", data={"title": title}, follow=True, content_type="application/json")
+        response = self.c1.post("/v2/board/create/board/", data={"title": title}, follow=True, content_type="application/json")
         self.assertEqual(200, response.status_code, f"Creation of board failed | {response.text} | {response.status_code} | {response.headers}")
         res = response.json()
         board = Board.objects.get(pk=res['id'])
         self.assertEqual(title, res.get("title"), f"{res}")
         self.assertEqual(title, board.title)
         #
-        response2 = self.c1.put(f"/v2/update/board/{res['id']}/", data={"title": title2}, follow=True, content_type="application/json")
+        response2 = self.c1.put(f"/v2/board/update/board/{res['id']}/", data={"title": title2}, follow=True, content_type="application/json")
         self.assertEqual(200, response2.status_code, f"Update of board failed | {response2.text} | {response2.status_code} | {response2.headers}")
         res2 = response2.json()
         board2 = Board.objects.get(pk=res2['id'])
@@ -88,14 +88,14 @@ class MyBoardTest(TestCase):
     def test_invit(self):
         title = "Test board c"
         #
-        response = self.c1.post("/v2/create/board/", data={"title": title}, follow=True, content_type="application/json")
+        response = self.c1.post("/v2/board/create/board/", data={"title": title}, follow=True, content_type="application/json")
         self.assertEqual(200, response.status_code, f"Creation of board failed | {response.text} | {response.status_code} | {response.headers}")
         res = response.json()
         #
-        response3 = self.c2.post(f"/v2/invit/board/{res['id']}/", data={"email": self.c2_email, "admin": False}, follow=True, content_type="application/json")
+        response3 = self.c2.post(f"/v2/board/invit/board/{res['id']}/", data={"email": self.c2_email, "admin": False}, follow=True, content_type="application/json")
         self.assertEqual(403, response3.status_code, f"Invit failed | {response3.text} | {response3.status_code} | {response3.headers}")
         #
-        response2 = self.c1.post(f"/v2/invit/board/{res['id']}/", data={"email": self.c2_email, "admin": False}, follow=True, content_type="application/json")
+        response2 = self.c1.post(f"/v2/board/invit/board/{res['id']}/", data={"email": self.c2_email, "admin": False}, follow=True, content_type="application/json")
         self.assertEqual(200, response2.status_code, f"Invit failed | {response2.text} | {response2.status_code} | {response2.headers}")
         board = Board.objects.get(pk=res["id"])
         self.assertEqual(1, board.members.filter(email=self.c2_email).distinct().count(), f"{list(board.members.all())}")
@@ -104,19 +104,19 @@ class MyBoardTest(TestCase):
     def test_delete_member(self):
         title = "Test board c"
         #
-        response = self.c1.post("/v2/create/board/", data={"title": title}, follow=True, content_type="application/json")
+        response = self.c1.post("/v2/board/create/board/", data={"title": title}, follow=True, content_type="application/json")
         self.assertEqual(200, response.status_code, f"Creation of board failed | {response.text} | {response.status_code} | {response.headers}")
         res = response.json()
         #
-        response3 = self.c2.post(f"/v2/invit/board/{res['id']}/", data={"email": self.c2_email, "admin": False}, follow=True, content_type="application/json")
+        response3 = self.c2.post(f"/v2/board/invit/board/{res['id']}/", data={"email": self.c2_email, "admin": False}, follow=True, content_type="application/json")
         self.assertEqual(403, response3.status_code, f"Invit failed | {response3.text} | {response3.status_code} | {response3.headers}")
         #
-        response2 = self.c1.post(f"/v2/invit/board/{res['id']}/", data={"email": self.c2_email, "admin": False}, follow=True, content_type="application/json")
+        response2 = self.c1.post(f"/v2/board/invit/board/{res['id']}/", data={"email": self.c2_email, "admin": False}, follow=True, content_type="application/json")
         self.assertEqual(200, response2.status_code, f"Invit failed | {response2.text} | {response2.status_code} | {response2.headers}")
         board = Board.objects.get(pk=res["id"])
         self.assertEqual(1, board.members.filter(email=self.c2_email).distinct().count(), f"{list(board.members.all())}")
         #
-        response3 = self.c1.put(f"/v2/delete/member/{res['id']}/", data={"email": self.c2_email}, follow=True, content_type="application/json")
+        response3 = self.c1.put(f"/v2/board/delete/member/{res['id']}/", data={"email": self.c2_email}, follow=True, content_type="application/json")
         self.assertEqual(200, response3.status_code, f"Invit failed | {response3.text} | {response3.status_code} | {response3.headers}")
         board3 = Board.objects.get(pk=res["id"])
         self.assertEqual(0, board3.members.filter(email=self.c2_email).distinct().count(), f"{list(board3.members.all())}")
@@ -128,24 +128,24 @@ class MyBoardTest(TestCase):
         t1_cat = ["Backlog", "ToDo", "InProgress", "Done"]
         t2_cat = ["Done", "ToDo"]
         #
-        response = self.c1.post("/v2/create/board/", data={"title": title}, follow=True, content_type="application/json")
+        response = self.c1.post("/v2/board/create/board/", data={"title": title}, follow=True, content_type="application/json")
         self.assertEqual(200, response.status_code, f"Creation of board failed | {response.text} | {response.status_code} | {response.headers}")
         res = response.json()
         self.assertEqual([], res["categories"], "Bad categories")
         #
-        response2 = self.c1.put(f"/v2/update/categories/{res['id']}/", data={"categories": t_cat}, follow=True, content_type="application/json")
+        response2 = self.c1.put(f"/v2/board/update/categories/{res['id']}/", data={"categories": t_cat}, follow=True, content_type="application/json")
         self.assertEqual(200, response2.status_code, f"Update of categories failed | {response2.text} | {response2.status_code} | {response2.headers}")
         res2 = response2.json()
         self.assertEqual(t_cat, res2["categories"], "Bad categories")
         self.assertEqual(t_cat, Board.objects.get(pk=res["id"]).categories)
         #
-        response3 = self.c1.put(f"/v2/update/categories/{res['id']}/", data={"categories": t1_cat}, follow=True, content_type="application/json")
+        response3 = self.c1.put(f"/v2/board/update/categories/{res['id']}/", data={"categories": t1_cat}, follow=True, content_type="application/json")
         self.assertEqual(200, response3.status_code, f"Update of categories failed | {response3.text} | {response3.status_code} | {response3.headers}")
         res3 = response3.json()
         self.assertEqual(t1_cat, res3["categories"], "Bad categories")
         self.assertEqual(t1_cat, Board.objects.get(pk=res["id"]).categories)
         #
-        response4 = self.c1.put(f"/v2/update/categories/{res['id']}/", data={"categories": t2_cat}, follow=True, content_type="application/json")
+        response4 = self.c1.put(f"/v2/board/update/categories/{res['id']}/", data={"categories": t2_cat}, follow=True, content_type="application/json")
         self.assertEqual(200, response4.status_code, f"Update of categories failed | {response4.text} | {response4.status_code} | {response4.headers}")
         res4 = response4.json()
         self.assertEqual(t2_cat, res4["categories"], "Bad categories")
@@ -163,13 +163,13 @@ class MyBoardTest(TestCase):
         t_category = "ToDo"
         t3_category = "Abcd"
         #
-        response = self.c1.post("/v2/create/board/", data={"title": title}, follow=True, content_type="application/json")
+        response = self.c1.post("/v2/board/create/board/", data={"title": title}, follow=True, content_type="application/json")
         self.assertEqual(200, response.status_code, f"Creation of board failed | {response.text} | {response.status_code} | {response.headers}")
         res = response.json()
         board = Board.objects.get(pk=res["id"])
         self.assertEqual(0, board.tasks.all().distinct().count(), "Board tasks number does not match")
         #
-        response2 = self.c1.post(f"/v2/create/task/{res['id']}/", data={"title": t_title, "description": t_description, "category": t_category}, follow=True, content_type="application/json")
+        response2 = self.c1.post(f"/v2/board/create/task/{res['id']}/", data={"title": t_title, "description": t_description, "category": t_category}, follow=True, content_type="application/json")
         self.assertEqual(200, response2.status_code, f"Creation of task failed | {response2.text} | {response2.status_code} | {response2.headers}")
         res2 = response2.json()
         self.assertEqual(t_title, res2.get("title"), f"Bad task title | {res2}")
@@ -182,7 +182,7 @@ class MyBoardTest(TestCase):
         self.assertEqual(t_description, task2.description, f"Bad task description | {res2}")
         self.assertEqual(t_category, task2.category, f"Bad task category {res2}")
         #
-        response3 = self.c1.post(f"/v2/create/task/{res['id']}/", data={"title": t3_title, "description": t3_description, "category": t3_category}, follow=True, content_type="application/json")
+        response3 = self.c1.post(f"/v2/board/create/task/{res['id']}/", data={"title": t3_title, "description": t3_description, "category": t3_category}, follow=True, content_type="application/json")
         self.assertEqual(200, response.status_code, f"Creation of task failed | {response3.text} | {response3.status_code} | {response3.headers}")
         res3 = response3.json()
         self.assertEqual(t3_title, res3.get("title"), f"Bad task title | {res3}")
@@ -201,17 +201,17 @@ class MyBoardTest(TestCase):
         t_description = "afasdfasd"
         t_category = "Done"
         #
-        response = self.c1.post("/v2/create/board/", data={"title": title}, follow=True, content_type="application/json")
+        response = self.c1.post("/v2/board/create/board/", data={"title": title}, follow=True, content_type="application/json")
         self.assertEqual(200, response.status_code, f"Creation of board failed | {response.text} | {response.status_code} | {response.headers}")
         res = response.json()
         #
-        response2 = self.c1.post(f"/v2/create/task/{res['id']}/", data={"title": t_title, "description": t_description, "category": t_category}, follow=True, content_type="application/json")
+        response2 = self.c1.post(f"/v2/board/create/task/{res['id']}/", data={"title": t_title, "description": t_description, "category": t_category}, follow=True, content_type="application/json")
         self.assertEqual(200, response2.status_code, f"Creation of task failed | {response2.text} | {response2.status_code} | {response2.headers}")
         res2 = response2.json()
         board2 = Board.objects.get(pk=res["id"])
         self.assertEqual(1, board2.tasks.all().distinct().count(), "Task number bad")
         #
-        response3 = self.c1.put(f"/v2/delete/task/{res['id']}/{res2['id']}/", follow=True)
+        response3 = self.c1.put(f"/v2/board/delete/task/{res['id']}/{res2['id']}/", follow=True)
         self.assertEqual(200, response3.status_code, f"Delete task failed | {response3.text} | {response3.status_code} | {response3.headers}")
         board3 = Board.objects.get(pk=res["id"])
         self.assertEqual(0, board3.tasks.all().distinct().count(), "Task number bad")
@@ -223,23 +223,23 @@ class MyBoardTest(TestCase):
         t_description = "afasdfasd"
         t_category = "Done"
         #
-        response = self.c1.post("/v2/create/board/", data={"title": title}, follow=True, content_type="application/json")
+        response = self.c1.post("/v2/board/create/board/", data={"title": title}, follow=True, content_type="application/json")
         self.assertEqual(200, response.status_code, f"Creation of board failed | {response.text} | {response.status_code} | {response.headers}")
         res = response.json()
         #
-        response2 = self.c1.post(f"/v2/create/task/{res['id']}/", data={"title": t_title, "description": t_description, "category": t_category}, follow=True, content_type="application/json")
+        response2 = self.c1.post(f"/v2/board/create/task/{res['id']}/", data={"title": t_title, "description": t_description, "category": t_category}, follow=True, content_type="application/json")
         self.assertEqual(200, response2.status_code, f"Creation of task failed | {response2.text} | {response2.status_code} | {response2.headers}")
         res2 = response2.json()
         board2 = Board.objects.get(pk=res["id"])
         self.assertEqual(1, board2.tasks.all().distinct().count(), "Task number bad")
         #
-        response3 = self.c1.put(f"/v2/delete/task/{res['id']}/{res2['id']}/", follow=True)
+        response3 = self.c1.put(f"/v2/board/delete/task/{res['id']}/{res2['id']}/", follow=True)
         self.assertEqual(200, response3.status_code, f"Delete task failed | {response3.text} | {response3.status_code} | {response3.headers}")
         board3 = Board.objects.get(pk=res["id"])
         self.assertEqual(0, board3.tasks.all().distinct().count(), "Task number bad")
         self.assertEqual(1, board3.archived.all().distinct().count(), "Task number bad")
         #
-        response4 = self.c1.put(f"/v2/deleteforce/task/{res['id']}/{res2['id']}/", follow=True)
+        response4 = self.c1.put(f"/v2/board/deleteforce/task/{res['id']}/{res2['id']}/", follow=True)
         self.assertEqual(200, response4.status_code, f"Delete task failed | {response4.text} | {response4.status_code} | {response4.headers}")
         board4 = Board.objects.get(pk=res["id"])
         self.assertEqual(0, board4.tasks.all().distinct().count(), "Task number bad")
@@ -255,13 +255,13 @@ class MyBoardTest(TestCase):
         t_category = "ToDo"
         t3_category = "Abcd"
         #
-        response = self.c1.post("/v2/create/board/", data={"title": title}, follow=True, content_type="application/json")
+        response = self.c1.post("/v2/board/create/board/", data={"title": title}, follow=True, content_type="application/json")
         self.assertEqual(200, response.status_code, f"Creation of board failed | {response.text} | {response.status_code} | {response.headers}")
         res = response.json()
         board = Board.objects.get(pk=res["id"])
         self.assertEqual(0, board.tasks.all().distinct().count(), "Board tasks number does not match")
         #
-        response2 = self.c1.post(f"/v2/create/task/{res['id']}/", data={"title": t_title, "description": t_description, "category": t_category}, follow=True, content_type="application/json")
+        response2 = self.c1.post(f"/v2/board/create/task/{res['id']}/", data={"title": t_title, "description": t_description, "category": t_category}, follow=True, content_type="application/json")
         self.assertEqual(200, response.status_code, f"Creation of task failed | {response2.text} | {response2.status_code} | {response2.headers}")
         res2 = response2.json()
         self.assertEqual(t_title, res2.get("title"), f"Bad task title | {res2}")
@@ -274,7 +274,7 @@ class MyBoardTest(TestCase):
         self.assertEqual(t_description, task2.description, f"Bad task description | {res2}")
         self.assertEqual(t_category, task2.category, f"Bad task category {res2}")
         #
-        response3 = self.c1.put(f"/v2/update/task/{res['id']}/{res2['id']}/", data={"title": t3_title, "description": t3_description, "category": t3_category}, follow=True, content_type="application/json")
+        response3 = self.c1.put(f"/v2/board/update/task/{res['id']}/{res2['id']}/", data={"title": t3_title, "description": t3_description, "category": t3_category}, follow=True, content_type="application/json")
         self.assertEqual(200, response3.status_code, f"Update of task failed | {response3.status_code} | {response3.text} | {response3.headers}")
         res3 = response3.json()
         self.assertEqual(t3_title, res3.get("title"), f"Bad task title | {res2}")
@@ -298,28 +298,28 @@ class MyBoardTest(TestCase):
         t_category = "ToDo"
         t3_category = "Abcd"
         #
-        response = self.c1.post("/v2/create/board/", data={"title": title}, follow=True, content_type="application/json")
+        response = self.c1.post("/v2/board/create/board/", data={"title": title}, follow=True, content_type="application/json")
         self.assertEqual(200, response.status_code, f"Creation of board failed | {response.text} | {response.status_code} | {response.headers}")
         res = response.json()
         #
-        response2 = self.c1.post(f"/v2/create/task/{res['id']}/", data={"title": t_title, "description": t_description, "category": t_category}, follow=True, content_type="application/json")
+        response2 = self.c1.post(f"/v2/board/create/task/{res['id']}/", data={"title": t_title, "description": t_description, "category": t_category}, follow=True, content_type="application/json")
         self.assertEqual(200, response2.status_code, f"Creation of task failed | {response2.text} | {response2.status_code} | {response2.headers}")
         res2 = response2.json()
         #
-        response3 = self.c1.post(f"/v2/create/task/{res['id']}/", data={"title": t3_title, "description": t3_description, "category": t3_category}, follow=True, content_type="application/json")
+        response3 = self.c1.post(f"/v2/board/create/task/{res['id']}/", data={"title": t3_title, "description": t3_description, "category": t3_category}, follow=True, content_type="application/json")
         self.assertEqual(200, response3.status_code, f"Creation of task failed | {response3.text} | {response3.status_code} | {response3.headers}")
         res3 = response3.json()
         #
-        response4 = self.c1.get(f"/v2/get/board/{res['id']}/", follow=True)
+        response4 = self.c1.get(f"/v2/board/get/board/{res['id']}/", follow=True)
         self.assertEqual(200, response4.status_code, f"Get board failed | {response4.text} | {response4.status_code} | {response4.headers}")
         res4 = response4.json()
         self.assertEqual(res2["id"], res4["tasks"][0]["id"], f"Order Failed | {res4}")
         self.assertEqual(res3["id"], res4["tasks"][1]["id"], f"Order Failed | {res4}")
         #
-        response5 = self.c1.put(f"/v2/update/task/{res['id']}/{res2['id']}/", data={"order": 1}, follow=True, content_type="application/json")
+        response5 = self.c1.put(f"/v2/board/update/task/{res['id']}/{res2['id']}/", data={"order": 1}, follow=True, content_type="application/json")
         self.assertEqual(200, response5.status_code, f"Update task failed | {response5.text} | {response5.status_code} | {response5.headers}")
         #
-        response6 = self.c1.get(f"/v2/get/board/{res['id']}/", follow=True)
+        response6 = self.c1.get(f"/v2/board/get/board/{res['id']}/", follow=True)
         self.assertEqual(200, response6.status_code, f"Get board failed | {response6.text} | {response6.status_code} | {response6.headers}")
         res6 = response6.json()
         self.assertEqual(res3["id"], res6["tasks"][0]["id"], f"Order Failed | {res6}")
