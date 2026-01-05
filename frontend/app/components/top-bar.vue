@@ -28,9 +28,11 @@
                 </template>
             </UPopover>
         </div>
-        <UDropdownMenu :items="profile" :ui="{content: 'bg-[var(--secondary-grey)] rounded-sm'}">
-            <UButton :avatar="{src: auth.user.profile_picture, size: 'xs'}" color="secondary" variant="ghost" size="md" :ui="{ base: 'p-1 rounded-sm'}"/>
-        </UDropdownMenu>
+        <ClientOnly>
+            <UDropdownMenu :items="profile" :ui="{content: 'bg-[var(--secondary-grey)] rounded-sm'}">
+                <UButton :avatar="{src: auth.user.profile_picture, size: 'xs'}" color="secondary" variant="ghost" size="md" :ui="{ base: 'p-1 rounded-sm'}"/>
+            </UDropdownMenu>
+        </ClientOnly>
     </div>
 </template>
 
