@@ -28,13 +28,14 @@ const router = useRouter()
 onMounted(async () => {
   if (!auth.authenticated || !auth.user.id) return
 
-  api.setjwt(auth.jwt)
+  api.setjwt(auth.jwt);
 
-  loading.value = true
+  loading.value = true;
   try {
-    boards.value = await api.getBoards()
+    const response = await api.getBoards();
+    boards.value = response.boards;
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 })
 </script>
