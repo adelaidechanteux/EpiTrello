@@ -5,14 +5,24 @@
     --main-grey: #1f1f21;
     --secondary-grey: #29292c;
     --text-color: #bfc1c4;
+    --ui-primary: #1f1f21;
+    --ui-secondary: #ffffff;
+    --ui-info: #669df1;
+    --ui-black: #101204;
+    --ui-hover: #e3e4f21f;
 }
 
 body {
     background-color: #1f1f21;
+    color: var(--text-color);
 }
 
 h1 {
     font-size: 16px;
     font-weight: 600;
+    color: var(--text-color);
+}
+
+h3 {
     color: var(--text-color);
 }
