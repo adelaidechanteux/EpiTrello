@@ -2,6 +2,8 @@ from uuid import UUID
 from ninja import Router, Schema
 from django.http import HttpRequest, HttpResponse
 from collections import OrderedDict
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 from myboard.models import Board, Task
 from myauth.models import User
@@ -22,6 +24,16 @@ OUTERROR_UserDoesNotExists = (404, {"code": "UserDoesNotExists", "message": "Use
 OUTERROR_MissingPermission = (403, {"code": "MissingPermission", "message": "Connected User has not enough permissions"})
 OUTERROR_BadValue = (400, {"code": "BadValue", "message": "Value in a body value item does not meet requirements"})
 OUTERROR_TaskIsInvalid = (400, {"code": "TaskIsInvalid", "message": "Task is not in the good state to be processed by this call"})
+
+
+def send_websocket(board_id: str, type_: str, data: dict):
+    channel_layer = get_channel_layer()
+    if channel_layer is None:
+        raise ValueError("Channel Layer not set up")
+    async_to_sync(channel_layer.group_send)(f"board_{board_id}", {
+        "type": type_,
+        **data,
+    })
 
 
 class OUTMemberSchema(Schema):
@@ -131,6 +143,10 @@ def invit_board(request: HttpRequest, board_id: UUID, body: InInvitBoardSchema):
     board.members.add(user)
     if body.admin:
         board.admin.add(user)
+    send_websocket(f"{board_id}", "f_invit_board", {
+        "admin": body.admin,
+        "user": OUTMemberSchema.from_orm(user).dict()
+    })
     return {}
 
 class InCreateBoardSchema(Schema):
@@ -160,6 +176,9 @@ def delete_board(request: HttpRequest, board_id: UUID):
     if request.session["member_id"] not in permissions:
         return OUTERROR_MissingPermission
     board.delete()
+    send_websocket(f"{board_id}", "f_delete_board", {
+        "id": f"{board_id}"
+    })
     return {}
 
 
@@ -200,10 +219,15 @@ def create_task(request: HttpRequest, board_id: UUID, body: InCreateTask):
     )
     task.save()
     board.tasks.add(task)
-    categories = set(board.categories)
-    categories.add(f"{task.category}")
-    board.categories = list(categories)
-    board.save(update_fields=["categories"])
+    old_category = board.categories
+    new_category = list(OrderedDict.fromkeys(board.categories + [f"{task.category}"]))
+    if old_category != new_category:
+        board.categories = new_category
+        board.save(update_fields=["categories"])
+    send_websocket(f"{board_id}", "f_create_task", {
+        "task": OUTTaskSchema.from_orm(task).dict(),
+        "board_categories": new_category,
+    })
     return task
 
 
@@ -228,6 +252,9 @@ def delete_task(request: HttpRequest, board_id: UUID, task_id: UUID):
         return OUTERROR_TaskIsInvalid
     board.tasks.remove(task)
     board.archived.add(task)
+    send_websocket(f"{board_id}", "f_delete_task", {
+        "id": f"{task_id}",
+    })
     return {}
 
 
@@ -252,6 +279,9 @@ def deleteforce_task(request: HttpRequest, board_id: UUID, task_id: UUID):
         return OUTERROR_TaskIsInvalid
     board.archived.remove(task)
     task.delete()
+    send_websocket(f"{board_id}", "f_deleteforce_task", {
+        "id": f"{task_id}",
+    })
     return {}
 
 
@@ -300,6 +330,10 @@ def update_task(request: HttpRequest, board_id: UUID, task_id: UUID, body: InUpd
     if old_category != new_category:
         board.categories = new_category
         board.save(update_fields=["categories"])
+    send_websocket(f"{board_id}", "f_create_task", {
+        "task": OUTTaskSchema.from_orm(task).dict(),
+        "board_categories": new_category,
+    })
     return task
 
 
@@ -326,7 +360,7 @@ def update_board(request: HttpRequest, board_id: UUID, body: InUpdateBoard):
             if request.session["member_id"] != f"{board.owner.id}":
                 return OUTERROR_MissingPermission
             try:
-                _ = User.objects.get(pk=body.owner)
+                body.owner = User.objects.get(pk=body.owner)
             except User.DoesNotExist:
                 return OUTERROR_UserDoesNotExists
     optional_arg: list[str] = []
@@ -335,6 +369,10 @@ def update_board(request: HttpRequest, board_id: UUID, body: InUpdateBoard):
             setattr(board, key, getattr(body, key))
             optional_arg.append(key)
     board.save(update_fields=optional_arg)
+    send_websocket(f"{board_id}", "f_update_board", {
+        "board_title": f"{board.title}",
+        "board_owner": OUTMemberSchema.from_orm(board.owner).dict()
+    })
     return board
 
 
@@ -367,6 +405,9 @@ def delete_member(request: HttpRequest, board_id: UUID, body: InDeleteMember):
     board.members.remove(target)
     if f"{target.id}" in permission_admin:
         board.admin.remove(target)
+    send_websocket(f"{board_id}", "f_delete_member", {
+        "id": f"{target.id}",
+    })
     return board
 
 
@@ -385,4 +426,7 @@ def update_categories(request: HttpRequest, board_id: UUID, body: InUpdateCatego
         return OUTERROR_BadValue
     board.categories = list(OrderedDict.fromkeys(body.categories))
     board.save(update_fields=["categories"])
+    send_websocket(f"{board_id}", "f_update_categories", {
+        "categories": board.categories,
+    })
     return board

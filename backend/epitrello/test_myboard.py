@@ -1,7 +1,13 @@
+import json
 from base64 import b64encode
 from typing import override
-from django.test import TestCase, Client
+from asgiref.sync import sync_to_async
+from channels.db import database_sync_to_async, aclose_old_connections
+from django.test import TestCase, Client, AsyncClient
+from channels.testing import WebsocketCommunicator
+from trellobackend.asgi import application_test
 from myboard.models import Board, Task
+from myboard.consumers import BoardRealTime
 import sys
 
 class MyBoardTest(TestCase):
@@ -324,3 +330,36 @@ class MyBoardTest(TestCase):
         res6 = response6.json()
         self.assertEqual(res3["id"], res6["tasks"][0]["id"], f"Order Failed | {res6}")
         self.assertEqual(res2["id"], res6["tasks"][1]["id"], f"Order Failed | {res6}")
+
+
+class MyBoardWebsocketTest(TestCase):
+    c1: AsyncClient
+    c1_email = "u1@ggl.com"
+
+    async def test_create_task(self):
+        pass
+        # title = "Board ws 1"
+        # t_title = "impl ws"
+        # t_description = "realtime shjbfkljeahbvj"
+        # t_category = "ToDo"
+        # auth1 = b64encode(f"{self.c1_email}:u1".encode()).decode()
+        # self.c1 = AsyncClient(headers={"Authorization": f"Test {auth1}"})
+        # #
+        # response = await self.c1.post("/v2/board/create/board/", headers={"Authorization": f"Test {auth1}"}, data={"title": title}, follow=True, content_type="application/json")
+        # self.assertEqual(200, response.status_code, f"Creation of board failed | {response.text} | {response.status_code} | {response.headers}")
+        # res = response.json()
+        # #
+        # communicator = WebsocketCommunicator(application_test, f"/ws/board/{res['id']}/", headers=((b"Authorization", f"Test {auth1}".encode()),))
+        # connected, subprotocol = await communicator.connect()
+        # assert connected
+        # #
+        # self.c1 = AsyncClient(headers={"Authorization": f"Test {auth1}"})
+        # response2 = await self.c1.post(f"/v2/board/create/task/{res['id']}/", headers={"Authorization": f"Test {auth1}"}, data={"title": t_title, "description": t_description, "category": t_category}, follow=True, content_type="application/json")
+        # self.assertEqual(200, response2.status_code, f"Creation of task failed | {response2.text} | {response2.status_code} | {response2.headers}")
+        # res2 = response2.json()
+        # #
+        # response3 = await communicator.receive_from()
+        # res3 = json.loads(response3)
+        # self.assertEqual(res2["id"], res3["task"]["id"], f"{res3}")
+        # self.assertEqual(res2["title"], res3["task"]["title"], f"{res3}")
+        # await communicator.disconnect()

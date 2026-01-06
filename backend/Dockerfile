@@ -28,4 +28,4 @@ WORKDIR /app
 
 EXPOSE 5081
 
-CMD ["sh", "-c", "./manage.py migrate && daphne -b 0.0.0.0 -p 5081 trellobackend.asgi:application"]
+CMD ["sh", "-c", "./manage.py migrate && exec daphne -b 0.0.0.0 -p 5081 trellobackend.asgi:application"]
