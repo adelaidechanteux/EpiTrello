@@ -22,7 +22,7 @@ const boardData = ref<any[]>([])
 const getBoardData = async () => {
   if (!auth.authenticated || !auth.jwt || !boardID.value) return
   api.setjwt(auth.jwt)
-  const data = await api.getBoards(boardID.value).catch((error) => {
+  const data = await api.getBoardData(boardID.value).catch((error) => {
     console.error(error);
   });
   boardData.value = data;

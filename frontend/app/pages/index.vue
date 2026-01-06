@@ -32,7 +32,7 @@ onMounted(async () => {
 
   loading.value = true
   try {
-    boards.value = await api.getBoards(auth.user.id)
+    boards.value = await api.getBoards()
   } finally {
     loading.value = false
   }
