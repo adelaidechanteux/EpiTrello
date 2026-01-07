@@ -306,6 +306,7 @@ def update_task(request: HttpRequest, board_id: UUID, task_id: UUID, body: InUpd
 class InUpdateBoard(Schema):
     title: str | None = None
     owner: str | None = None
+    color: str | None = None
 
 
 @router.put("/update/board/{board_id}/", response={200: OUTBoardSchema, 400: OUTError, 403: OUTError, 404: OUTError})
@@ -330,7 +331,7 @@ def update_board(request: HttpRequest, board_id: UUID, body: InUpdateBoard):
             except User.DoesNotExist:
                 return OUTERROR_UserDoesNotExists
     optional_arg: list[str] = []
-    for key in ("title", "owner"):
+    for key in ("title", "owner", "color"):
         if getattr(body, key) is not None:
             setattr(board, key, getattr(body, key))
             optional_arg.append(key)

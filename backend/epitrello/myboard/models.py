@@ -14,6 +14,8 @@ from myauth.models import User
 COLOR_CHOICES = [
     ("#800080", "Purple"),
     ("#FF69B4", "Pink"),
+    ("#000000", "Noir"),
+    ("#7FFF00", "Vert"),
 ]
 
 CATEGORY_LENGTH = 30
@@ -62,6 +64,9 @@ class Board(models.Model):
     categories = ArrayField(models.CharField(max_length=CATEGORY_LENGTH), default=list)
     admin = models.ManyToManyField(to=User, related_name="board_admin_set")
     user_favorite = models.ManyToManyField(to=User, related_name="board_favorite_set")
+    color = models.CharField(
+        max_length=7, choices=COLOR_CHOICES, default=COLOR_CHOICES[2][0]
+    )
 
 
 @final
