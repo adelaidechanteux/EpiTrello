@@ -5,9 +5,9 @@
         <div class="min-w-[260px] bg-(--ui-black) rounded-xl p-3 flex flex-col shadow hover:shadow-lg">
           <h3 class="font-semibold mb-3 pl-3" >{{ column.title }}</h3>
 
-          <Draggable v-model="column.cards" item-key="id" group="cards" class="space-y-2 min-h-[40px]">
+          <Draggable v-model="column.cards" item-key="id"  @end="onTaskReorder" group="cards" class="space-y-2 min-h-[40px]">
             <template #item="{ element }">
-              <div class="bg-(--secondary-grey) color-(--ui-info) rounded-lg p-2 text-sm shadow">
+              <div class="bg-(--secondary-grey) color-(--ui-info) rounded-lg p-2 text-sm shadow" @click="openTask(element)">
                 {{ element.title }}
               </div>
             </template>
@@ -57,11 +57,18 @@
       </template>
     </Draggable>
   </div>
+   <TaskModal v-if="selectedTask" :open="taskModalOpen"
+    :task="selectedTask"
+    :boardID="boardID!"
+    :categories="board.map(c => c.id)"
+    @close="taskModalOpen = false"
+    @updated="onTaskUpdated"
+  />
 </template>
 
 <script setup lang="ts">
 import Draggable from 'vuedraggable';
-import type { Card, Column } from '~/composables/types/board';
+import type { Task, Column } from '~/composables/types/board';
 import { useRoute } from 'vue-router';
 
 const props = defineProps<{
@@ -79,39 +86,60 @@ const addingColumn = ref(false)
 const newColumnTitle = ref('')
 const board = defineModel<Column[]>('board', { required: true })
 
+const selectedTask = ref<Task | null>(null)
+const selectedColumnId = ref<string | null>(null)
+const taskModalOpen = ref(false)
+
+const emit = defineEmits<{
+  (e: 'close'): void
+  (e: 'updated'): void
+}>()
+
 async function addCard(column: Column) {
   const title = newCardTitles.value[column.id]?.trim()
   if (!title) return
 
-  const tempId = crypto.randomUUID()
-
-  const newCard: Card = {
-    id: tempId,
+  const placeholder: Task = {
+    id: '',
     title,
+    description: '',
+    category: column.id,
+    color: null,
+    date_start: null,
+    date_end: null,
+    assigned: null,
   }
-  column.cards.push(newCard)
+
+  column.cards.push(placeholder)
 
   newCardTitles.value[column.id] = ''
   addingCard.value[column.id] = false
 
   try {
-    await api.createTask(boardID, {
+    const createdTask = await api.createTask(boardID, {
       title,
       description: '',
       category: column.id,
-      color: '',
-      date_start: '',
-      date_end: '',
-      assigned: '',
+      color: null,
+      date_start: null,
+      date_end: null,
+      assigned: null,
     })
+
+    const index = column.cards.indexOf(placeholder)
+    if (index !== -1) {
+      column.cards[index] = createdTask
+    }
   } catch (err) {
     console.error(err)
-    column.cards = column.cards.filter(c => c.id !== tempId)
+    column.cards = column.cards.filter(c => c !== placeholder)
   }
 }
 
 
+
 function cancelAddCard(column: Column) {
+  console.log(props.board)
   addingCard.value[column.id] = false
   newCardTitles.value[column.id] = ''
 }
@@ -151,10 +179,49 @@ async function onColumnReorder() {
   }
 }
 
+async function onTaskReorder() {
+  try {
+    const updates: Promise<any>[] = []
+
+    for (const column of board.value) {
+      for (const task of column.cards) {
+        updates.push(
+          api.updateTask(boardID, task.id, {
+            category: column.id
+          })
+        )
+      }
+    }
+
+    await Promise.all(updates)
+  } catch (err) {
+    console.error(err)
+  }
+}
 
 function cancelAddColumn() {
   newColumnTitle.value = ''
   addingColumn.value = false
 }
+
+function openTask(card: Task) {
+  selectedTask.value = {
+    id: card.id,
+    title: card.title,
+    description: card.description,
+    category: card.category,
+    color: card.color,
+    date_start: card.date_start,
+    date_end: card.date_end,
+    assigned: card.assigned,
+  }
+  taskModalOpen.value = true
+}
+
+function onTaskUpdated(updatedTask: Task) {
+  emit('updated')
+}
+
+
 </script>
 
