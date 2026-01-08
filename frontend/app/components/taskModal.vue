@@ -65,12 +65,33 @@ const emit = defineEmits<{
 const { $bridge } = useNuxtApp()
 const api = $bridge
 
-const form = reactive({ ...props.task })
+const form = reactive({
+  ...props.task,
+  date_start: toDateInput(props.task.date_start),
+  date_end: toDateInput(props.task.date_end),
+})
 
 watch(
   () => props.task,
-  (t) => Object.assign(form, t)
+  (t) => {
+    Object.assign(form, {
+      ...t,
+      date_start: toDateInput(t.date_start),
+      date_end: toDateInput(t.date_end),
+    })
+  }
 )
+
+function toDateInput(value?: string | null): string | null {
+  if (!value) return null
+
+  const date =
+    value.includes('T')
+      ? value.split('T')[0]
+      : value.split(' ')[0]
+
+  return date ?? null
+}
 
 function close() {
     console.log(props.categories)

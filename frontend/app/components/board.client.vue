@@ -136,8 +136,6 @@ async function addCard(column: Column) {
   }
 }
 
-
-
 function cancelAddCard(column: Column) {
   console.log(props.board)
   addingCard.value[column.id] = false
