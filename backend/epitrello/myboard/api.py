@@ -165,7 +165,7 @@ def delete_board(request: HttpRequest, board_id: UUID):
 
 class InCreateTask(Schema):
     title: str
-    description: str
+    description: str | None = None
     category: str
     color: str | None = None
     date_start: str | None = None
@@ -187,6 +187,8 @@ def create_task(request: HttpRequest, board_id: UUID, body: InCreateTask):
         return OUTERROR_MissingPermission
     if len(body.title) >= 50 or len(body.category) >= 30:
         return OUTERROR_BadValue
+    if body.description is None:
+        body.description = ""
     optional_arg = {}
     for key in ("color", "date_start", "date_end", "assigned"):
         if getattr(body, key) is not None:
