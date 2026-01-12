@@ -27,17 +27,17 @@ ENVIRON = (
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-2d6*a*m2@9y2%$+17#0j&#n+!lkh(a@*&j549u8ka6)uktemd0"
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False if ENVIRON == "production" else True
 
-ALLOWED_HOSTS = [x for x in os.getenv("ALLOWED_HOSTS", "").split(";") if x]
+ALLOWED_HOSTS = [x.strip() for x in os.getenv("ALLOWED_HOSTS", "").split(";") if x]
 CORS_ALLOWED_ORIGINS = [
-    x for x in os.getenv("CORS_ALLOWED_ORIGINS", "").split(";") if x
+    x.strip() for x in os.getenv("CORS_ALLOWED_ORIGINS", "").split(";") if x
 ]
 CSRF_TRUSTED_ORIGINS = [
-    x for x in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(";") if x
+    x.strip() for x in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(";") if x
 ]
 
 # Application definition
