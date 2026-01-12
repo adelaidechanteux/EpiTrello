@@ -2,8 +2,12 @@ import { defineNuxtConfig } from 'nuxt/config'
 
 export default defineNuxtConfig({
   modules: [
-    'nuxt-vue3-google-signin'
+    'nuxt-vue3-google-signin',
+    '@nuxt/ui',
+    '@pinia/nuxt',
+    'pinia-plugin-persistedstate/nuxt'
   ],
+  css: ['~/assets/css/main.css'],
   googleSignIn: {
     clientId: '80772791160-5uj31qlmeraos15g0ukpp9o791r00jv0.apps.googleusercontent.com',
   },
