@@ -142,10 +142,10 @@ export class bridge {
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer ' + this.jwt
                 },
-                body: JSON.stringify(data) //might need changes later
+                body: JSON.stringify(data)
             });
             if (response.ok) {
-                return { status: response.status, success: true };
+                return await response.json();
             }
             throw { status: response.status, success: false };
         } catch (err) {
