@@ -184,7 +184,7 @@ def delete_board(request: HttpRequest, board_id: UUID):
 
 class InCreateTask(Schema):
     title: str
-    description: str
+    description: str | None = None
     category: str
     color: str | None = None
     date_start: str | None = None
@@ -206,6 +206,8 @@ def create_task(request: HttpRequest, board_id: UUID, body: InCreateTask):
         return OUTERROR_MissingPermission
     if len(body.title) >= 50 or len(body.category) >= 30:
         return OUTERROR_BadValue
+    if body.description is None:
+        body.description = ""
     optional_arg = {}
     for key in ("color", "date_start", "date_end", "assigned"):
         if getattr(body, key) is not None:
@@ -340,6 +342,7 @@ def update_task(request: HttpRequest, board_id: UUID, task_id: UUID, body: InUpd
 class InUpdateBoard(Schema):
     title: str | None = None
     owner: str | None = None
+    color: str | None = None
 
 
 @router.put("/update/board/{board_id}/", response={200: OUTBoardSchema, 400: OUTError, 403: OUTError, 404: OUTError})
@@ -364,7 +367,7 @@ def update_board(request: HttpRequest, board_id: UUID, body: InUpdateBoard):
             except User.DoesNotExist:
                 return OUTERROR_UserDoesNotExists
     optional_arg: list[str] = []
-    for key in ("title", "owner"):
+    for key in ("title", "owner", "color"):
         if getattr(body, key) is not None:
             setattr(board, key, getattr(body, key))
             optional_arg.append(key)

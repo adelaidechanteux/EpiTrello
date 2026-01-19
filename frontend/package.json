@@ -15,9 +15,11 @@
     "nuxt": "^4.2.0",
     "nuxt-vue3-google-signin": "^0.0.13",
     "pinia": "^3.0.4",
-    "vue-router": "^4.6.3"
+    "pinia-plugin-persistedstate": "^4.7.1",
+    "vue-router": "^4.6.3",
+    "vuedraggable": "^4.1.0"
   },
   "overrides": {
-    "vue": "^3.5.18"
+    "vue": "^3.5.22"
   }
 }
