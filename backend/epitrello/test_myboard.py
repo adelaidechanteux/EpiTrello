@@ -335,31 +335,41 @@ class MyBoardTest(TestCase):
 class MyBoardWebsocketTest(TestCase):
     c1: AsyncClient
     c1_email = "u1@ggl.com"
+    c2_email = "u2@ggl.com"
 
-    async def test_create_task(self):
-        pass
-        # title = "Board ws 1"
-        # t_title = "impl ws"
-        # t_description = "realtime shjbfkljeahbvj"
-        # t_category = "ToDo"
-        # auth1 = b64encode(f"{self.c1_email}:u1".encode()).decode()
-        # self.c1 = AsyncClient(headers={"Authorization": f"Test {auth1}"})
-        # #
-        # response = await self.c1.post("/v2/board/create/board/", headers={"Authorization": f"Test {auth1}"}, data={"title": title}, follow=True, content_type="application/json")
-        # self.assertEqual(200, response.status_code, f"Creation of board failed | {response.text} | {response.status_code} | {response.headers}")
-        # res = response.json()
-        # #
-        # communicator = WebsocketCommunicator(application_test, f"/ws/board/{res['id']}/", headers=((b"Authorization", f"Test {auth1}".encode()),))
-        # connected, subprotocol = await communicator.connect()
-        # assert connected
-        # #
-        # self.c1 = AsyncClient(headers={"Authorization": f"Test {auth1}"})
-        # response2 = await self.c1.post(f"/v2/board/create/task/{res['id']}/", headers={"Authorization": f"Test {auth1}"}, data={"title": t_title, "description": t_description, "category": t_category}, follow=True, content_type="application/json")
-        # self.assertEqual(200, response2.status_code, f"Creation of task failed | {response2.text} | {response2.status_code} | {response2.headers}")
-        # res2 = response2.json()
-        # #
-        # response3 = await communicator.receive_from()
-        # res3 = json.loads(response3)
-        # self.assertEqual(res2["id"], res3["task"]["id"], f"{res3}")
-        # self.assertEqual(res2["title"], res3["task"]["title"], f"{res3}")
-        # await communicator.disconnect()
+    async def test_login(self):
+        auth1 = b64encode(f"{self.c1_email}:u1".encode()).decode()
+        self.c1 = AsyncClient(headers={"Authorization": f"Test {auth1}"})
+        #
+        response = await self.c1.post("/v2/board/create/board/", data={"title": "test db"}, follow=True, content_type="application/json")
+        self.assertEqual(200, response.status_code, f"Creation of board failed | {response.text} | {response.status_code} | {response.headers}")
+        res = response.json()
+        #
+        communicator = WebsocketCommunicator(application_test, f"/ws/board/{res['id']}/")
+        connected, subprotocol = await communicator.connect()
+        assert connected
+        await communicator.send_json_to(data={"type": "login", "Authorization": f"Test {auth1}"})
+        response3 = await communicator.receive_from()
+        res3 = json.loads(response3)
+        self.assertEqual(res3["type"], "login")
+        self.assertEqual(res3["success"], True)
+        await communicator.disconnect()
+
+    # async def test_login_fail(self):
+    #     auth1 = b64encode(f"{self.c1_email}:u1".encode()).decode()
+    #     self.c1 = AsyncClient(headers={"Authorization": f"Test {auth1}"})
+    #     #
+    #     response = await self.c1.post("/v2/board/create/board/", data={"title": "test db"}, follow=True, content_type="application/json")
+    #     self.assertEqual(200, response.status_code, f"Creation of board failed | {response.text} | {response.status_code} | {response.headers}")
+    #     res = response.json()
+    #     #
+    #     auth2 = b64encode(f"{self.c2_email}:u2".encode()).decode()
+    #     communicator = WebsocketCommunicator(application_test, f"/ws/board/{res['id']}/")
+    #     connected, subprotocol = await communicator.connect()
+    #     assert connected
+    #     await communicator.send_json_to(data={"type": "login", "Authorization": f"Test {auth2}"})
+    #     response3 = await communicator.receive_from()
+    #     res3 = json.loads(response3)
+    #     self.assertEqual(res3["type"], "login")
+    #     self.assertEqual(res3["code"], "BoardPermission")
+    #     await communicator.disconnect()

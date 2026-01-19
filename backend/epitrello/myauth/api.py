@@ -11,32 +11,12 @@ from myauth.models import User
 from myauth.middleware import check_google_auth, check_test_auth
 
 
-class AuthWebsocket:
-    def __init__(self, app) -> None:
-        self.app = app
-
-    async def __call__(self, scope, receive, send):
-        idtoken = ""
-        for key, value in scope["headers"]:
-            if key not in (b"Authorization", b"authorization", b"Http-Authorization"):
-                print(f"continue | key={key} | value={value}", file=sys.stderr)
-                continue
-            idtoken = value.decode()
-            print(f"break | idtoken={idtoken}", file=sys.stderr)
-            break
-        await aclose_old_connections()
-        if idtoken.startswith("Bearer "):
-            m = await database_sync_to_async(check_google_auth)(idtoken)
-        elif settings.ENVIRON == "test" and idtoken.startswith("Test "):
-            m = await database_sync_to_async(check_test_auth)(idtoken)
-        else:
-            m = None
-        if not isinstance(m, User):
-            scope["user"] = None
-            return await self.app(scope, receive, send)
-        scope["user"] = m
-        scope["session"]["member_id"] = f"{m.id}"
-        return await self.app(scope, receive, send)
+def auth_websocket(idtoken: str):
+    if idtoken.startswith("Bearer "):
+        return check_google_auth(idtoken)
+    if settings.ENVIRON == "test" and idtoken.startswith("Test "):
+        return check_test_auth(idtoken)
+    return None
 
 
 class AuthGoogleBearer(HttpBearer):
@@ -48,7 +28,6 @@ class AuthGoogleBearer(HttpBearer):
             return
         request.session["member_id"] = f"{m.id}"
         return m
-
 
 
 AUTH_CHECKS = [AuthGoogleBearer()]
@@ -73,28 +52,7 @@ if settings.ENVIRON == "test":
         param_name = "authorization"
     class AuthHttpTest(AuthTest):
         param_name = "Http-Authorization"
-    class AuthAsyncTest(APIKeyHeader):
-        param_name = "Authorization"
-        @override
-        async def authenticate(self, request: HttpRequest, key: str | None):
-            print(f"------------ HEADERS {request.headers}", file=sys.stderr)
-            if key is None:
-                return
-            await aclose_old_connections()
-            try:
-                m = await database_sync_to_async(check_test_auth)(key)
-            except Exception as e:
-                print(f"ERROR {self.__class__}:authenticate: {e}")
-                m = None
-            if not isinstance(m, User):
-                return
-            request.session["member_id"] = f"{m.id}"
-            return m
-    class AuthAsyncMinTest(AuthAsyncTest):
-        param_name = "authorization"
-    class AuthAsyncHttpTest(AuthAsyncTest):
-        param_name = "Http-Authorization"
-    AUTH_CHECKS.extend((AuthTest(), AuthMinTest(), AuthHttpTest(), AuthAsyncTest(), AuthAsyncMinTest(), AuthAsyncHttpTest()))
+    AUTH_CHECKS.extend((AuthTest(), AuthMinTest(), AuthHttpTest()))
 
 router = Router(auth=AUTH_CHECKS, tags=["auth"])
 
