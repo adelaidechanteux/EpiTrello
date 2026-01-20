@@ -88,6 +88,7 @@ def get_board(request: HttpRequest, board_id: UUID):
 class OUTBoardMinSchema(Schema):
     id: UUID
     title: str
+    color: str
 
 
 class OUTBoardsMinSchema(Schema):
@@ -148,7 +149,7 @@ def create_board(request: HttpRequest, body: InCreateBoardSchema):
         return OUTERROR_BadValue
     if len(body.color) >= COLOR_LENGTH:
         return OUTERROR_BadValue
-    board = Board(title=body.title, owner=user)
+    board = Board(title=body.title, owner=user, color=body.color)
     board.save()
     board.members.add(user)
     return board
