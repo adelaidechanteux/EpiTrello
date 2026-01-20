@@ -3,7 +3,7 @@ from ninja import Router, Schema
 from django.http import HttpRequest, HttpResponse
 from collections import OrderedDict
 
-from myboard.models import Board, Task
+from myboard.models import Board, Task, TITLE_LENGTH, CATEGORY_LENGTH, COLOR_LENGTH
 from myauth.models import User
 from myauth.api import AUTH_CHECKS
 
@@ -69,6 +69,7 @@ class OUTBoardSchema(Schema):
     owner: OUTMemberSchema
     categories: list[str]
     admin: list[OUTMemberSchema]
+    color: str
 
 
 class OUTOKSchema(Schema):
@@ -135,6 +136,7 @@ def invit_board(request: HttpRequest, board_id: UUID, body: InInvitBoardSchema):
 
 class InCreateBoardSchema(Schema):
     title: str
+    color: str
 
 @router.post("/create/board/", response={200: OUTBoardSchema, 400: OUTError, 404: OUTError})
 def create_board(request: HttpRequest, body: InCreateBoardSchema):
@@ -142,7 +144,9 @@ def create_board(request: HttpRequest, body: InCreateBoardSchema):
         user: User = User.objects.get(pk=request.session["member_id"])
     except User.DoesNotExist:
         return OUTERROR_UserDoesNotExists
-    if len(body.title) >= 50:
+    if len(body.title) >= TITLE_LENGTH:
+        return OUTERROR_BadValue
+    if len(body.color) >= COLOR_LENGTH:
         return OUTERROR_BadValue
     board = Board(title=body.title, owner=user)
     board.save()
@@ -185,7 +189,9 @@ def create_task(request: HttpRequest, board_id: UUID, body: InCreateTask):
     permissions = [f"{x.id}" for x in board.members.all()]
     if f"{user.id}" not in permissions:
         return OUTERROR_MissingPermission
-    if len(body.title) >= 50 or len(body.category) >= 30:
+    if len(body.title) >= TITLE_LENGTH or len(body.category) >= CATEGORY_LENGTH:
+        return OUTERROR_BadValue
+    if body.color is not None and len(body.color) >= COLOR_LENGTH:
         return OUTERROR_BadValue
     if body.description is None:
         body.description = ""
@@ -287,6 +293,12 @@ def update_task(request: HttpRequest, board_id: UUID, task_id: UUID, body: InUpd
     permissions = [f"{x.id}" for x in board.members.all()]
     if f"{user.id}" not in permissions:
         return OUTERROR_MissingPermission
+    if body.title is not None and len(body.title) >= TITLE_LENGTH:
+        return OUTERROR_BadValue
+    if body.category is not None and len(body.category) >= CATEGORY_LENGTH:
+        return OUTERROR_BadValue
+    if body.color is not None and len(body.color) >= COLOR_LENGTH:
+        return OUTERROR_BadValue
     optional_arg: list[str] = []
     for key in ("title", "description", "color", "category", "date_start", "date_end", "owner", "assigned", "completed"):
         if getattr(body, key) is not None:
@@ -332,6 +344,10 @@ def update_board(request: HttpRequest, board_id: UUID, body: InUpdateBoard):
                 _ = User.objects.get(pk=body.owner)
             except User.DoesNotExist:
                 return OUTERROR_UserDoesNotExists
+    if body.title is not None and len(body.title) >= TITLE_LENGTH:
+        return OUTERROR_BadValue
+    if body.color is not None and len(body.color) >= COLOR_LENGTH:
+        return OUTERROR_BadValue
     optional_arg: list[str] = []
     for key in ("title", "owner", "color"):
         if getattr(body, key) is not None:

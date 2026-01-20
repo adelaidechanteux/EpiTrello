@@ -11,23 +11,19 @@ from myauth.models import User
 
 # Create your models here.
 
-COLOR_CHOICES = [
-    ("#800080", "Purple"),
-    ("#FF69B4", "Pink"),
-    ("#000000", "Noir"),
-    ("#7FFF00", "Vert"),
-]
+COLOR_CHOICE = "#800080"
 
 CATEGORY_LENGTH = 30
-
+TITLE_LENGTH = 50
+COLOR_LENGTH = 8
 
 @final
 class Task(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    title = models.CharField(max_length=50)
+    title = models.CharField(max_length=TITLE_LENGTH)
     description = models.TextField()
     color = models.CharField(
-        max_length=7, choices=COLOR_CHOICES, default=COLOR_CHOICES[0][0]
+        max_length=COLOR_LENGTH, default=COLOR_CHOICE
     )
     category = models.CharField(max_length=CATEGORY_LENGTH)
     date_start = models.DateTimeField(blank=True, null=True)
@@ -53,7 +49,7 @@ class Task(models.Model):
 @final
 class Board(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    title = models.CharField(max_length=50)
+    title = models.CharField(max_length=TITLE_LENGTH)
     members = models.ManyToManyField(to=User)
     tasks = OrderedManyToManyField(to=Task, related_name="board_tasks_set", through="BoardTasksThroughModel")
     #
@@ -65,7 +61,7 @@ class Board(models.Model):
     admin = models.ManyToManyField(to=User, related_name="board_admin_set")
     user_favorite = models.ManyToManyField(to=User, related_name="board_favorite_set")
     color = models.CharField(
-        max_length=7, choices=COLOR_CHOICES, default=COLOR_CHOICES[2][0]
+        max_length=COLOR_LENGTH, default=COLOR_CHOICE
     )
 
 
