@@ -405,3 +405,26 @@ def update_categories(request: HttpRequest, board_id: UUID, body: InUpdateCatego
     board.categories = list(OrderedDict.fromkeys(body.categories))
     board.save(update_fields=["categories"])
     return board
+
+
+class InUpdateFavorite(Schema):
+    favorite: bool
+
+
+@router.put("/update/favorite/{board_id}/", response={200: OUTOKSchema, 403: OUTError, 404: OUTError})
+def update_favorite(request: HttpRequest, board_id: UUID, body: InUpdateFavorite):
+    try:
+        board = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        return OUTERROR_BoardDoesNotExists
+    try:
+        user = User.objects.get(pk=request.session["member_id"])
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    if not board.members.contains(user):
+        return OUTERROR_MissingPermission
+    if body.favorite:
+        board.user_favorite.add(user)
+    else:
+        board.user_favorite.remove(user)
+    return {}
