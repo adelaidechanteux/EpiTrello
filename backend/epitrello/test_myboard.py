@@ -190,6 +190,37 @@ class MyBoardTest(TestCase):
         self.assertEqual(0, len(res5.get("admin")), f"{res5}")
 
 
+    def test_update_role(self):
+        title = "Test board c"
+        color = "#800080"
+        #
+        response = self.c1.post("/v2/board/create/board/", data={"title": title, "color": color}, follow=True, content_type="application/json")
+        self.assertEqual(200, response.status_code, f"Creation of board failed | {response.text} | {response.status_code} | {response.headers}")
+        res = response.json()
+        #
+        response3 = self.c2.post(f"/v2/board/invit/board/{res['id']}/", data={"email": self.c2_email, "admin": False}, follow=True, content_type="application/json")
+        self.assertEqual(403, response3.status_code, f"Invit failed | {response3.text} | {response3.status_code} | {response3.headers}")
+        #
+        response2 = self.c1.post(f"/v2/board/invit/board/{res['id']}/", data={"email": self.c2_email, "admin": False}, follow=True, content_type="application/json")
+        self.assertEqual(200, response2.status_code, f"Invit failed | {response2.text} | {response2.status_code} | {response2.headers}")
+        board = Board.objects.get(pk=res["id"])
+        self.assertEqual(1, board.members.filter(email=self.c2_email).distinct().count(), f"{list(board.members.all())}")
+        self.assertEqual(0, board.admin.filter(email=self.c2_email).distinct().count(), f"{list(board.admin.all())}")
+        #
+        response4 = self.c1.put(f"/v2/board/update/role/{res['id']}/", data={"email": self.c2_email, "admin": True}, follow=True, content_type="application/json")
+        self.assertEqual(200, response4.status_code, f"Update role failed | {response4.text} | {response4.status_code} | {response4.headers}")
+        #
+        board = Board.objects.get(pk=res["id"])
+        self.assertEqual(1, board.members.filter(email=self.c2_email).distinct().count(), f"{list(board.members.all())}")
+        self.assertEqual(1, board.admin.filter(email=self.c2_email).distinct().count(), f"{list(board.admin.all())}")
+        #
+        response5 = self.c1.put(f"/v2/board/update/role/{res['id']}/", data={"email": self.c2_email, "admin": False}, follow=True, content_type="application/json")
+        self.assertEqual(200, response5.status_code, f"Update role failed | {response5.text} | {response5.status_code} | {response5.headers}")
+        #
+        board = Board.objects.get(pk=res["id"])
+        self.assertEqual(1, board.members.filter(email=self.c2_email).distinct().count(), f"{list(board.members.all())}")
+        self.assertEqual(0, board.admin.filter(email=self.c2_email).distinct().count(), f"{list(board.admin.all())}")
+
 
     # TASK
 
