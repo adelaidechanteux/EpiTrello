@@ -26,7 +26,7 @@ class MyBoardTest(TestCase):
 
     def test_create_board(self):
         title = "Test Board 1"
-        color = "#800080"
+        color = "#800081"
         #
         response = self.c1.post("/v2/board/create/board/", data={"title": title, "color": color}, follow=True, content_type="application/json")
         self.assertEqual(200, response.status_code, f"{response.text} | {response.status_code} | {response.headers}")
@@ -34,6 +34,7 @@ class MyBoardTest(TestCase):
         self.assertEqual(title, res.get("title"), f"Bad board title | {res}")
         board = Board.objects.get(pk=res["id"])
         self.assertEqual(res["owner"]["id"], f"{board.owner.id}", f"Bad board owner id |{res}")
+        self.assertEqual(res["color"], color, f"{res}")
 
     def test_board_members(self):
         title = "Test Board b1"
@@ -157,6 +158,38 @@ class MyBoardTest(TestCase):
         res4 = response4.json()
         self.assertEqual(t2_cat, res4["categories"], "Bad categories")
         self.assertEqual(t2_cat, Board.objects.get(pk=res["id"]).categories)
+
+
+    def test_update_favorite(self):
+        title = "Test board c"
+        color = "#800080"
+        #
+        response = self.c1.post("/v2/board/create/board/", data={"title": title, "color": color}, follow=True, content_type="application/json")
+        self.assertEqual(200, response.status_code, f"Creation of board failed | {response.text} | {response.status_code} | {response.headers}")
+        res = response.json()
+        #
+        response2 = self.c1.put(f"/v2/board/update/favorite/{res['id']}/", data={"favorite": True}, follow=True, content_type="application/json")
+        self.assertEqual(200, response2.status_code, f"Put to favorite failed | {response2.text} | {response2.status_code} | {response2.headers}")
+        #
+        response3 = self.c1.get("/v2/board/boards/", follow=True)
+        self.assertEqual(200, response3.status_code, f"{response3.text} | {response3.status_code} | {response3.headers}")
+        res3 = response3.json()
+        self.assertEqual(1, len(res3.get("boards")), f"{res3}")
+        self.assertEqual(1, len(res3.get("owned")), f"{res3}")
+        self.assertEqual(1, len(res3.get("favorite")), f"{res3}")
+        self.assertEqual(0, len(res3.get("admin")), f"{res3}")
+        #
+        response4 = self.c1.put(f"/v2/board/update/favorite/{res['id']}/", data={"favorite": False}, follow=True, content_type="application/json")
+        self.assertEqual(200, response4.status_code, f"Put to favorite failed | {response4.text} | {response4.status_code} | {response4.headers}")
+        #
+        response5 = self.c1.get("/v2/board/boards/", follow=True)
+        self.assertEqual(200, response5.status_code, f"{response5.text} | {response5.status_code} | {response5.headers}")
+        res5 = response5.json()
+        self.assertEqual(1, len(res5.get("boards")), f"{res5}")
+        self.assertEqual(1, len(res5.get("owned")), f"{res5}")
+        self.assertEqual(0, len(res5.get("favorite")), f"{res5}")
+        self.assertEqual(0, len(res5.get("admin")), f"{res5}")
+
 
 
     # TASK

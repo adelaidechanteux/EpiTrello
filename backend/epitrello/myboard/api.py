@@ -88,6 +88,7 @@ def get_board(request: HttpRequest, board_id: UUID):
 class OUTBoardMinSchema(Schema):
     id: UUID
     title: str
+    color: str
 
 
 class OUTBoardsMinSchema(Schema):
@@ -148,7 +149,7 @@ def create_board(request: HttpRequest, body: InCreateBoardSchema):
         return OUTERROR_BadValue
     if len(body.color) >= COLOR_LENGTH:
         return OUTERROR_BadValue
-    board = Board(title=body.title, owner=user)
+    board = Board(title=body.title, owner=user, color=body.color)
     board.save()
     board.members.add(user)
     return board
@@ -405,3 +406,26 @@ def update_categories(request: HttpRequest, board_id: UUID, body: InUpdateCatego
     board.categories = list(OrderedDict.fromkeys(body.categories))
     board.save(update_fields=["categories"])
     return board
+
+
+class InUpdateFavorite(Schema):
+    favorite: bool
+
+
+@router.put("/update/favorite/{board_id}/", response={200: OUTOKSchema, 403: OUTError, 404: OUTError})
+def update_favorite(request: HttpRequest, board_id: UUID, body: InUpdateFavorite):
+    try:
+        board = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        return OUTERROR_BoardDoesNotExists
+    try:
+        user = User.objects.get(pk=request.session["member_id"])
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    if not board.members.contains(user):
+        return OUTERROR_MissingPermission
+    if body.favorite:
+        board.user_favorite.add(user)
+    else:
+        board.user_favorite.remove(user)
+    return {}
