@@ -76,12 +76,18 @@ class OUTOKSchema(Schema):
     ok: bool = True
 
 
-@router.get("/get/board/{board_id}/", response={200: OUTBoardSchema, 404: OUTError})
+@router.get("/get/board/{board_id}/", response={200: OUTBoardSchema, 403: OUTError, 404: OUTError})
 def get_board(request: HttpRequest, board_id: UUID):
     try:
         board = Board.objects.get(pk=board_id)
     except Board.DoesNotExist:
         return OUTERROR_BoardDoesNotExists
+    try:
+        user = User.objects.get(pk=request.session["member_id"])
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    if not board.members.contains(user):
+        return OUTERROR_MissingPermission
     return board
 
 
@@ -123,16 +129,19 @@ def invit_board(request: HttpRequest, board_id: UUID, body: InInvitBoardSchema):
         board = Board.objects.get(pk=board_id)
     except Board.DoesNotExist:
         return OUTERROR_BoardDoesNotExists
-    permissions = [f"{x.id}" for x in board.admin.all()] + [f"{board.owner.id}"]
-    if request.session["member_id"] not in permissions:
-        return OUTERROR_MissingPermission
     try:
-        user = User.objects.get(email=body.email)
+        user: User = User.objects.get(pk=request.session["member_id"])
     except User.DoesNotExist:
         return OUTERROR_UserDoesNotExists
-    board.members.add(user)
+    if not board.admin.contains(user):
+        return OUTERROR_MissingPermission
+    try:
+        target = User.objects.get(email=body.email)
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    board.members.add(target)
     if body.admin:
-        board.admin.add(user)
+        board.admin.add(target)
     return {}
 
 class InCreateBoardSchema(Schema):
@@ -152,6 +161,7 @@ def create_board(request: HttpRequest, body: InCreateBoardSchema):
     board = Board(title=body.title, owner=user, color=body.color)
     board.save()
     board.members.add(user)
+    board.admin.add(user)
     return board
 
 
@@ -161,8 +171,7 @@ def delete_board(request: HttpRequest, board_id: UUID):
         board: Board = Board.objects.get(pk=board_id)
     except Board.DoesNotExist:
         return OUTERROR_BoardDoesNotExists
-    permissions = [f"{board.owner.id}"]
-    if request.session["member_id"] not in permissions:
+    if request.session["member_id"] != f"{board.owner.id}":
         return OUTERROR_MissingPermission
     board.delete()
     return {}
@@ -187,8 +196,7 @@ def create_task(request: HttpRequest, board_id: UUID, body: InCreateTask):
         user: User = User.objects.get(pk=request.session["member_id"])
     except User.DoesNotExist:
         return OUTERROR_UserDoesNotExists
-    permissions = [f"{x.id}" for x in board.members.all()]
-    if f"{user.id}" not in permissions:
+    if not board.members.contains(user):
         return OUTERROR_MissingPermission
     if len(body.title) >= TITLE_LENGTH or len(body.category) >= CATEGORY_LENGTH:
         return OUTERROR_BadValue
@@ -230,10 +238,9 @@ def delete_task(request: HttpRequest, board_id: UUID, task_id: UUID):
         user = User.objects.get(pk=request.session["member_id"])
     except User.DoesNotExist:
         return OUTERROR_UserDoesNotExists
-    permissions = [f"{x.id}" for x in board.members.all()]
-    if f"{user.id}" not in permissions:
+    if not board.members.contains(user):
         return OUTERROR_MissingPermission
-    if board.tasks.filter(pk=task.id).distinct().count() == 0:
+    if not board.tasks.contains(task):
         return OUTERROR_TaskIsInvalid
     board.tasks.remove(task)
     board.archived.add(task)
@@ -254,17 +261,16 @@ def deleteforce_task(request: HttpRequest, board_id: UUID, task_id: UUID):
         user: User = User.objects.get(pk=request.session["member_id"])
     except User.DoesNotExist:
         return OUTERROR_UserDoesNotExists
-    permissions = [f"{x.id}" for x in board.admin.all()] + [f"{board.owner.id}"]
-    if f"{user.id}" not in permissions:
+    if not board.admin.contains(user):
         return OUTERROR_MissingPermission
-    if board.archived.filter(pk=task.id).distinct().count() == 0:
+    if not board.archived.contains(task):
         return OUTERROR_TaskIsInvalid
     board.archived.remove(task)
     task.delete()
     return {}
 
 
-@router.put("/restore/task/{board_id}/{task_id}/", response={200: OUTOKSchema, 400: OUTError, 404: OUTError})
+@router.put("/restore/task/{board_id}/{task_id}/", response={200: OUTOKSchema, 400: OUTError, 403: OUTError, 404: OUTError})
 def restore_task(request: HttpRequest, board_id: UUID, task_id: UUID):
     try:
         board: Board = Board.objects.get(pk=board_id)
@@ -274,6 +280,12 @@ def restore_task(request: HttpRequest, board_id: UUID, task_id: UUID):
         task: Task = Task.objects.get(pk=task_id)
     except Task.DoesNotExist:
         return OUTERROR_TaskDoesNotExists
+    try:
+        user = User.objects.get(pk=request.session["member_id"])
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    if not board.members.contains(user):
+        return OUTERROR_MissingPermission
     if not board.archived.contains(task):
         return OUTERROR_TaskIsInvalid
     board.archived.remove(task)
@@ -308,8 +320,7 @@ def update_task(request: HttpRequest, board_id: UUID, task_id: UUID, body: InUpd
         user: User = User.objects.get(pk=request.session["member_id"])
     except User.DoesNotExist:
         return OUTERROR_UserDoesNotExists
-    permissions = [f"{x.id}" for x in board.members.all()]
-    if f"{user.id}" not in permissions:
+    if not board.members.contains(user):
         return OUTERROR_MissingPermission
     if body.title is not None and len(body.title) >= TITLE_LENGTH:
         return OUTERROR_BadValue
@@ -351,17 +362,18 @@ def update_board(request: HttpRequest, board_id: UUID, body: InUpdateBoard):
         user = User.objects.get(pk=request.session["member_id"])
     except User.DoesNotExist:
         return OUTERROR_UserDoesNotExists
-    permissions = [f"{x.id}" for x in board.admin.all()] + [f"{board.owner.id}"]
-    if f"{user.id}" not in permissions:
+    if not board.members.contains(user):
         return OUTERROR_MissingPermission
+    try:
+        target = None
+        if body.owner is not None:
+            target = User.objects.get(email=body.owner)
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
     if body.owner is not None:
-        if body.owner != f"{board.owner.id}":
+        if f"{target.id}" != f"{board.owner.id}":
             if request.session["member_id"] != f"{board.owner.id}":
                 return OUTERROR_MissingPermission
-            try:
-                _ = User.objects.get(pk=body.owner)
-            except User.DoesNotExist:
-                return OUTERROR_UserDoesNotExists
     if body.title is not None and len(body.title) >= TITLE_LENGTH:
         return OUTERROR_BadValue
     if body.color is not None and len(body.color) >= COLOR_LENGTH:
@@ -393,17 +405,20 @@ def delete_member(request: HttpRequest, board_id: UUID, body: InDeleteMember):
         target = User.objects.get(email=body.email)
     except User.DoesNotExist:
         return OUTERROR_UserDoesNotExists
-    permission_admin = [f"{x.id}" for x in board.admin.all()]
-    permission_owner = [f"{board.owner.id}"]
-    if f"{user.id}" not in (permission_admin + permission_owner):
+    if not board.admin.contains(user):
         return OUTERROR_MissingPermission
-    if f"{target.id}" in permission_owner:
+    if f"{target.id}" == f"{board.owner.id}":
         return OUTERROR_BadValue
-    if f"{user.id}" in permission_admin and f"{target.id}" in permission_admin:
+    if f"{user.id}" == f"{board.owner.id}":
+        board.members.remove(target)
+        board.admin.remove(target)
+        board.user_favorite.remove(target)
+        return board
+    if board.admin.contains(target):
         return OUTERROR_MissingPermission
     board.members.remove(target)
-    if f"{target.id}" in permission_admin:
-        board.admin.remove(target)
+    board.admin.remove(target)
+    board.user_favorite.remove(target)
     return board
 
 
@@ -411,12 +426,18 @@ class InUpdateCategory(Schema):
     categories: list[str]
 
 
-@router.put("/update/categories/{board_id}/", response={200: OUTBoardSchema, 400: OUTError, 404: OUTError})
+@router.put("/update/categories/{board_id}/", response={200: OUTBoardSchema, 400: OUTError, 403: OUTError, 404: OUTError})
 def update_categories(request: HttpRequest, board_id: UUID, body: InUpdateCategory):
     try:
         board = Board.objects.get(pk=board_id)
     except Board.DoesNotExist:
         return OUTERROR_BoardDoesNotExists
+    try:
+        user = User.objects.get(pk=request.session["member_id"])
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    if not board.members.contains(user):
+        return OUTERROR_MissingPermission
     categories_present = set([f"{x.category}" for x in board.tasks.all()])
     if not all([x in body.categories for x in categories_present]):
         return OUTERROR_BadValue
@@ -444,11 +465,9 @@ def update_role(request: HttpRequest, board_id: UUID, body: InUpdateRole):
         target = User.objects.get(email=body.email)
     except User.DoesNotExist:
         return OUTERROR_UserDoesNotExists
-    if not board.admin.contains(user) and f"{board.owner.id}" != f"{user.id}":
+    if f"{board.owner.id}" != f"{user.id}":
         return OUTERROR_MissingPermission
     if f"{board.owner.id}" == f"{target.id}":
-        return OUTERROR_MissingPermission
-    if board.admin.contains(target) and board.admin.contains(user):
         return OUTERROR_MissingPermission
     if body.admin:
         board.admin.add(target)
