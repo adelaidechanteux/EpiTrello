@@ -40,7 +40,7 @@
       <template #footer>
         <div class="min-w-[260px] flex-shrink-0">
           <div v-if="!addingColumn">
-            <UButton icon="i-lucide-plus" :ui="{ base: 'bg-transparent hover:bg-(--ui-hover) text-left text-sm px-2 py-2 rounded-lg text-text-color' }" class="justify-start" @click="addingColumn = true">
+            <UButton icon="i-lucide-plus" :ui="{ base: 'bg-transparent hover:bg-(--ui-hover) text-left text-sm px-2 py-2 rounded-lg text-[var(--text-color)]' }" class="justify-start" @click="addingColumn = true">
               Add another list
             </UButton>
           </div>

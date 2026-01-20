@@ -95,7 +95,7 @@ export class bridge {
         }
     }
 
-    async createBoard(boardName: string) {
+    async createBoard(data: { title: string; color: string }) {
         try {
             const response = await fetch(this.url + `/v2/board/create/board/`, {
                 method: 'POST',
@@ -103,7 +103,7 @@ export class bridge {
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer ' + this.jwt
                 },
-                body: JSON.stringify({ title: boardName }),
+                body: JSON.stringify(data),
             });
             if (response.ok) {
                 return await response.json();
