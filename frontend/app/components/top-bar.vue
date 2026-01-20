@@ -69,7 +69,7 @@ const state = reactive({
     name: undefined
 })
 
-const color = ref('#00C16A')
+const color = ref('#1f1f21')
 const chip = computed(() => ({ backgroundColor: color.value }))
 
 type Schema = typeof state
@@ -100,7 +100,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         })
 
         state.name = undefined
-        color.value = '#00C16A'
+        color.value = '#1f1f21'
 
         router.push(`/boards/${result.id}`)
     } catch (err) {
