@@ -264,6 +264,23 @@ def deleteforce_task(request: HttpRequest, board_id: UUID, task_id: UUID):
     return {}
 
 
+@router.put("/restore/task/{board_id}/{task_id}/", response={200: OUTOKSchema, 400: OUTError, 404: OUTError})
+def restore_task(request: HttpRequest, board_id: UUID, task_id: UUID):
+    try:
+        board: Board = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        return OUTERROR_BoardDoesNotExists
+    try:
+        task: Task = Task.objects.get(pk=task_id)
+    except Task.DoesNotExist:
+        return OUTERROR_TaskDoesNotExists
+    if not board.archived.contains(task):
+        return OUTERROR_TaskIsInvalid
+    board.archived.remove(task)
+    board.tasks.add(task)
+    return {}
+
+
 class InUpdateTask(Schema):
     title: str | None = None
     description: str | None = None
