@@ -86,7 +86,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     try {
         api.setjwt(auth.jwt)
 
-        const result = await api.createBoard(state.name)
+        const result = await api.createBoard({
+            title: state.name,
+            color: color.value})
 
         toast.add({
             title: 'Success',
@@ -98,6 +100,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         })
 
         state.name = undefined
+        color.value = '#00C16A'
 
         router.push(`/boards/${result.id}`)
     } catch (err) {
