@@ -5,6 +5,7 @@
     --main-grey: #1f1f21;
     --secondary-grey: #29292c;
     --text-color: #bfc1c4;
+    --fixed-text-color: #bfc1c4;
     --ui-primary: #1f1f21;
     --ui-secondary: #ffffff;
     --ui-info: #669df1;
@@ -29,7 +30,7 @@ h2 {
 }
 
 h3 {
-    color: var(--text-color);
+    color: var(--fixed-text-color);
 }
 
 h4 {

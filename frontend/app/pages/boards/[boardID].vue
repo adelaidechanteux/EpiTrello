@@ -1,5 +1,6 @@
 <template>
-    <TopBar></TopBar>
+  <TopBar></TopBar>
+  <div class="min-h-screen transition-colors duration-300" :style="pageStyle">
     <div class="header-bar">
       <h1>{{boardName}}</h1>
       <div class="flex items-center gap-4">
@@ -46,9 +47,10 @@
         </UModal>
       </div>
     </div>
-  <ClientOnly>
-    <Board v-if="board" v-model:board="board" @updated="getBoardData"/>
-  </ClientOnly>
+    <ClientOnly>
+      <Board v-if="board" v-model:board="board" @updated="getBoardData"/>
+    </ClientOnly>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -67,6 +69,22 @@ const api = $bridge
 const auth = useAuthStore()
 const board = ref<Column[]>([])
 const boardName = ref('')
+const boardColor = ref<string | null>(null)
+  const textColor = computed(() => {
+  if (!boardColor.value) return 'var(--text-color)'
+
+  const luminance = getLuminance(boardColor.value)
+
+  return luminance > 0.55 ? '#111827' : '#F9FAFB'
+})
+const pageStyle = computed(() => {
+  if (!boardColor.value) return {}
+
+  return {
+    backgroundColor: boardColor.value,
+    '--text-color': textColor.value
+  }
+})
 
 const shareOpen = ref(false)
 const inviteEmail = ref('')
@@ -85,6 +103,7 @@ const getBoardData = async () => {
     console.error(error);
   });
   boardName.value = data.title
+  boardColor.value = data.color ?? null
   members.value = data.members
   admins.value = data.admin ?? []
   console.log(admins.value)
@@ -143,6 +162,22 @@ onMounted(async () => {
   await getBoardData();
 })
 
+function hexToRgb(hex: string) {
+  const normalized = hex.replace('#', '')
+  const bigint = parseInt(normalized, 16)
+
+  return {
+    r: (bigint >> 16) & 255,
+    g: (bigint >> 8) & 255,
+    b: bigint & 255,
+  }
+}
+
+function getLuminance(hex: string) {
+  const { r, g, b } = hexToRgb(hex)
+
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255
+}
 </script>
 
 <style scoped>
