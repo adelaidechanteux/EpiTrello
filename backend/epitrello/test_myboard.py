@@ -26,7 +26,7 @@ class MyBoardTest(TestCase):
 
     def test_create_board(self):
         title = "Test Board 1"
-        color = "#800080"
+        color = "#800081"
         #
         response = self.c1.post("/v2/board/create/board/", data={"title": title, "color": color}, follow=True, content_type="application/json")
         self.assertEqual(200, response.status_code, f"{response.text} | {response.status_code} | {response.headers}")
@@ -34,6 +34,7 @@ class MyBoardTest(TestCase):
         self.assertEqual(title, res.get("title"), f"Bad board title | {res}")
         board = Board.objects.get(pk=res["id"])
         self.assertEqual(res["owner"]["id"], f"{board.owner.id}", f"Bad board owner id |{res}")
+        self.assertEqual(res["color"], color, f"{res}")
 
     def test_board_members(self):
         title = "Test Board b1"
