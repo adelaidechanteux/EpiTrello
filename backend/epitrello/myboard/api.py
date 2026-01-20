@@ -408,6 +408,37 @@ def update_categories(request: HttpRequest, board_id: UUID, body: InUpdateCatego
     return board
 
 
+class InUpdateRole(Schema):
+    email: str
+    admin: bool
+
+
+@router.put("/update/role/{board_id}/", response={200: OUTOKSchema, 403: OUTError, 404: OUTError})
+def update_role(request: HttpRequest, board_id: UUID, body: InUpdateRole):
+    try:
+        board = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        return OUTERROR_BoardDoesNotExists
+    try:
+        user = User.objects.get(pk=request.session["member_id"])
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    try:
+        target = User.objects.get(email=body.email)
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    if not board.admin.contains(user) and f"{board.owner.id}" != f"{user.id}":
+        return OUTERROR_MissingPermission
+    if f"{board.owner.id}" == f"{target.id}":
+        return OUTERROR_MissingPermission
+    if board.admin.contains(target) and board.admin.contains(user):
+        return OUTERROR_MissingPermission
+    if body.admin:
+        board.admin.add(target)
+    else:
+        board.admin.remove(target)
+    return {}
+
 class InUpdateFavorite(Schema):
     favorite: bool
 
