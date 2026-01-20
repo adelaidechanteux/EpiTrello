@@ -55,7 +55,7 @@ class MyBoardTest(TestCase):
         self.assertEqual(2, len(res2.get("boards")), f"{res2}")
         self.assertEqual(2, len(res2.get("owned")), f"{res2}")
         self.assertEqual(0, len(res2.get("favorite")), f"{res2}")
-        self.assertEqual(0, len(res2.get("admin")), f"{res2}")
+        self.assertEqual(2, len(res2.get("admin")), f"{res2}")
 
 
     def test_delete_board(self):
@@ -177,7 +177,7 @@ class MyBoardTest(TestCase):
         self.assertEqual(1, len(res3.get("boards")), f"{res3}")
         self.assertEqual(1, len(res3.get("owned")), f"{res3}")
         self.assertEqual(1, len(res3.get("favorite")), f"{res3}")
-        self.assertEqual(0, len(res3.get("admin")), f"{res3}")
+        self.assertEqual(1, len(res3.get("admin")), f"{res3}")
         #
         response4 = self.c1.put(f"/v2/board/update/favorite/{res['id']}/", data={"favorite": False}, follow=True, content_type="application/json")
         self.assertEqual(200, response4.status_code, f"Put to favorite failed | {response4.text} | {response4.status_code} | {response4.headers}")
@@ -188,7 +188,7 @@ class MyBoardTest(TestCase):
         self.assertEqual(1, len(res5.get("boards")), f"{res5}")
         self.assertEqual(1, len(res5.get("owned")), f"{res5}")
         self.assertEqual(0, len(res5.get("favorite")), f"{res5}")
-        self.assertEqual(0, len(res5.get("admin")), f"{res5}")
+        self.assertEqual(1, len(res5.get("admin")), f"{res5}")
 
 
     def test_update_role(self):
