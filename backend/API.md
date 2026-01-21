@@ -1,3 +1,7 @@
+# Epitrello http backend api
+
+A swagger is now available for the new api version. `/v2/docs`
+
 # Epitrello websocket backend api
 
 The websocket is used to implement real-time update from multiple user connected at the same time on a board.
