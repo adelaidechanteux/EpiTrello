@@ -271,4 +271,24 @@ export class bridge {
             throw err;
         }
     }
+
+    async favoriteBoard(boardID: string, favorite: boolean) {
+        try {
+            const response = await fetch(this.url + `/v2/board/update/favorite/` + boardID + `/`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + this.jwt
+                },
+                body: JSON.stringify({ favorite: favorite })
+            });
+            if (response.ok) {
+                return { status: response.status, success: true };
+            }
+            throw { status: response.status, success: false };
+        } catch (err) {
+            console.error('Network / delete board error', err);
+            throw err;
+        }
+    }
 }
