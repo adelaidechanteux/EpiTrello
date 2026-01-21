@@ -125,3 +125,21 @@ class BoardRealTime(WebsocketConsumer):
             "task": event["task"],
             "board_categories": event["board_categories"],
         }))
+
+    def f_restore_task(self, event: dict):
+        if not self.is_connected:
+            return
+        self.send(text_data=json.dumps({
+            "type": "f_restore_task",
+            "task": event["task"],
+            "board_categories": event["board_categories"],
+        }))
+
+    def f_update_role(self, event: dict):
+        if not self.is_connected:
+            return
+        self.send(text_data=json.dumps({
+            "type": "f_update_role",
+            "user_email": event["user_email"],
+            "admin": event["admin"],
+        }))
