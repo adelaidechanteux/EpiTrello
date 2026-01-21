@@ -47,17 +47,21 @@
         <UPopover title="Archived task" :content="{side: 'bottom', sideOffset: 8 }" :ui="{content: 'bg-[var(--main-grey)] w-70 px-6 py-4'}">
           <UButton icon="i-lucide-archive" color="secondary" variant="ghost"/>
           <template #content>
-            <div class="flex justify-center gap-4 mb-4">
+            <div class="flex flex-col items-center justify-center gap-4 mb-4">
               <h2 class="text-highlighted font-semibold">
                 Archived tasks
               </h2>
+              <UInput v-model="archiveSearch" icon="i-lucide-search" color="info" placeholder="Search archived tasks..." size="md" :ui="{ base: 'bg-[var(--secondary-grey)] ring-0 text-text-color' }" />
             </div>
+
             <div v-if="archivedTasks.length === 0" class="text-sm opacity-70 text-center py-6">
               No archived tasks
             </div>
-
             <div v-else class="space-y-4">
-              <div v-for="task in archivedTasks" :key="task.id">
+              <div v-if="filteredArchivedTasks.length === 0" class="text-sm opacity-60 text-center py-6">
+                No archived tasks found
+              </div>
+              <div v-for="task in filteredArchivedTasks" :key="task.id">
               <div class="bg-[var(--secondary-grey)] rounded-lg p-2 text-sm shadow cursor-pointer hover:bg-[var(--ui-hover)]" @click="openArchivedTask(task)">
                 {{ task.title }}
               </div>
@@ -124,6 +128,7 @@ const boardOwnerEmail = ref<string | null>(null)
 const archivedTasks = ref<Task[]>([])
 const selectedTask = ref<Task | null>(null)
 const taskModalOpen = ref(false)
+const archiveSearch = ref('')
 
 const getBoardData = async () => {
   if (!auth.authenticated || !auth.jwt || !boardID.value) return
@@ -241,6 +246,17 @@ async function deleteTask(task: Task) {
     console.error(err)
   }
 }
+
+const filteredArchivedTasks = computed(() => {
+  if (!archiveSearch.value.trim()) return archivedTasks.value
+
+  const q = archiveSearch.value.toLowerCase()
+
+  return archivedTasks.value.filter(task =>
+    task.title.toLowerCase().includes(q)
+  )
+})
+
 </script>
 
 <style scoped>
