@@ -430,7 +430,8 @@ def update_board(request: HttpRequest, board_id: UUID, body: InUpdateBoard):
     board.save(update_fields=optional_arg)
     send_websocket(f"{board_id}", "f_update_board", {
         "board_title": f"{board.title}",
-        "board_owner": OUTMemberSchema.from_orm(board.owner).dict()
+        "board_owner": OUTMemberSchema.from_orm(board.owner).dict(),
+        "board_color": f"{board.color}",
     })
     return board
 
@@ -531,7 +532,7 @@ def update_role(request: HttpRequest, board_id: UUID, body: InUpdateRole):
     else:
         board.admin.remove(target)
     send_websocket(f"{board_id}", "f_update_role", {
-        "user_email": f"{target.email}",
+        "user": OUTMemberSchema.from_orm(target).dict(),
         "admin": body.admin,
     })
     return {}

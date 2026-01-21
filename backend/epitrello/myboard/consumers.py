@@ -82,6 +82,7 @@ class BoardRealTime(WebsocketConsumer):
             "type": "f_update_board",
             "board_title": event["board_title"],
             "board_owner": event["board_owner"],
+            "board_color": event["board_color"],
         }))
 
     def f_update_categories(self, event: dict):
@@ -140,6 +141,6 @@ class BoardRealTime(WebsocketConsumer):
             return
         self.send(text_data=json.dumps({
             "type": "f_update_role",
-            "user_email": event["user_email"],
+            "user": event["user"],
             "admin": event["admin"],
         }))
