@@ -57,13 +57,7 @@
       </template>
     </Draggable>
   </div>
-   <TaskModal v-if="selectedTask" :open="taskModalOpen"
-    :task="selectedTask"
-    :boardID="boardID!"
-    :categories="board.map(c => c.id)"
-    @close="taskModalOpen = false"
-    @updated="onTaskUpdated"
-  />
+   <TaskModal v-if="selectedTask" :open="taskModalOpen" :task="selectedTask" :boardID="boardID!" :categories="board.map(c => c.id)" @close="taskModalOpen = false" :archived="false" @updated="onTaskUpdated"/>
 </template>
 
 <script setup lang="ts">
@@ -220,6 +214,4 @@ function onTaskUpdated(updatedTask: Task) {
   emit('updated')
 }
 
-
 </script>
-
