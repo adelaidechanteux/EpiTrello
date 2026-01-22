@@ -44,6 +44,39 @@
             </div>
           </template>
         </UModal>
+        <UPopover :content="{side: 'bottom', sideOffset: 8 }" :ui="{content: 'bg-[var(--main-grey)] w-70 p-4'}">
+          <UButton icon="i-lucide-ellipsis" color="secondary" variant="ghost"/>
+          <template #content>
+            <div class="flex flex-col items-center gap-4">
+              <UModal title="Change Board Color" :ui="{ body: 'bg-[var(--secondary-grey)] flex flex-col items-center justify-center gap-2', content: 'bg-[var(--secondary-grey)] ring-0 w-60', overlay: 'bg-[var(--ui-overlay)]', header: 'border-[var(--text-color)]', close: 'hover:bg-(--ui-hover)'}">
+                <UButton label="Open" color="secondary" variant="ghost" size="md" :ui="{ base: 'rounded-sm w-60 text-[var(--text-color)]'}">Board Color</UButton>
+                <template #body>
+                  <UColorPicker v-model="color"></UColorPicker>
+                  <UButton size="md" color="secondary" variant="ghost" :ui="{base: 'text-[var(--text-color)]'}" @click.stop="updateBoardColor()">Change</UButton>
+                </template>
+              </UModal>
+
+              <UModal title="Change Board Name" :ui="{ body: 'bg-[var(--secondary-grey)] flex flex-col items-center justify-center gap-2', content: 'bg-[var(--secondary-grey)] ring-0 w-60', overlay: 'bg-[var(--ui-overlay)]', header: 'border-[var(--text-color)]', close: 'hover:bg-(--ui-hover)'}">
+                <UButton label="Open" color="secondary" variant="ghost" size="md" :ui="{ base: 'rounded-sm w-60 text-[var(--text-color)]'}">Board Name</UButton>
+                <template #body>
+                  <UInput v-model="NewBoardName" color="info" :ui="{ base: 'bg-[var(--secondary-grey)] border-[var(--text-color)]'}"/>
+                  <UButton size="md" color="secondary" variant="ghost" :ui="{base: 'text-[var(--text-color)]'}" @click.stop="updateBoardName()">Change</UButton>
+                </template>
+              </UModal>
+
+              <UModal title="Delete Board" description="Are you sure you want to delete this board ?" :ui="{ body: 'bg-[var(--secondary-grey)] flex flex-col items-center justify-center gap-2', content: 'bg-[var(--secondary-grey)] ring-0 w-80', overlay: 'bg-[var(--ui-overlay)]', header: 'border-[var(--text-color)]', close: 'hover:bg-(--ui-hover)'}">
+                <UButton label="Open" color="secondary" variant="ghost" size="md" :ui="{ base: 'rounded-sm w-60 text-[var(--text-color)]'}">Delete Board</UButton>
+                <template #body v-if=" auth.user.email == boardOwnerEmail">
+                    <UButton size="md" color="error"  :ui="{base: 'text-[var(--ui-primary)]'}" @click.stop="deleteBoard()">Delete</UButton>
+                  </template>
+                  <template #body v-else>
+                    <h2>You do not have the permission to delete this board</h2>
+                    <UButton size="md" color="error" disabled :ui="{base: 'text-[var(--ui-primary)] mt-4 disabled:opacity-50'}" @click.stop="deleteBoard()">Delete</UButton>
+                </template>
+              </UModal>
+            </div>
+          </template>
+        </UPopover>
         <UPopover title="Archived task" :content="{side: 'bottom', sideOffset: 8 }" :ui="{content: 'bg-[var(--main-grey)] w-70 px-6 py-4'}">
           <UButton icon="i-lucide-archive" color="secondary" variant="ghost"/>
           <template #content>
@@ -99,7 +132,7 @@ const auth = useAuthStore()
 const board = ref<Column[]>([])
 const boardName = ref('')
 const boardColor = ref<string | null>(null)
-  const textColor = computed(() => {
+const textColor = computed(() => {
   if (!boardColor.value) return 'var(--text-color)'
 
   const luminance = getLuminance(boardColor.value)
@@ -125,6 +158,11 @@ const confirmOpen = ref(false)
 const memberToRemove = ref<string | null>(null)
 const boardOwnerEmail = ref<string | null>(null)
 
+const color = ref('#1f1f21')
+const NewBoardName = ref('')
+const router = useRouter()
+const toast = useToast()
+
 const archivedTasks = ref<Task[]>([])
 const selectedTask = ref<Task | null>(null)
 const taskModalOpen = ref(false)
@@ -137,6 +175,7 @@ const getBoardData = async () => {
     console.error(error);
   });
   boardName.value = data.title
+  NewBoardName.value = data.title
   boardColor.value = data.color ?? null
   members.value = data.members
   admins.value = data.admin ?? []
@@ -219,6 +258,22 @@ function getLuminance(hex: string) {
   return (0.299 * r + 0.587 * g + 0.114 * b) / 255
 }
 
+async function updateBoardColor() {
+  if (!boardID.value) return
+
+  try {
+    api.setjwt(auth.jwt)
+
+    await api.updateBoard(boardID.value, {
+      color: color.value
+    })
+
+    boardColor.value = color.value
+  } catch (err) {
+    console.error(err)
+  }
+}
+
 function openArchivedTask(task: Task) {
   selectedTask.value = { ...task }
   taskModalOpen.value = true
@@ -230,6 +285,22 @@ async function restoreTask(task: Task) {
   try {
     await api.restoreArchive(boardID.value, task.id)
     await getBoardData()
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+async function updateBoardName() {
+  if (!boardID.value) return
+
+  try {
+    api.setjwt(auth.jwt)
+
+    await api.updateBoard(boardID.value, {
+      title: NewBoardName.value
+    })
+
+    boardName.value = NewBoardName.value
   } catch (err) {
     console.error(err)
   }
@@ -247,6 +318,38 @@ async function deleteTask(task: Task) {
   }
 }
 
+async function deleteBoard() {
+  if (!boardID.value) return
+
+  try {
+    api.setjwt(auth.jwt)
+
+    await api.deleteBoard(boardID.value)
+
+    toast.add({
+      title: 'Board deleted',
+      description: 'The board has been deleted successfully.',
+      color: 'info',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
+
+    router.push('/')
+  } catch (err) {
+    console.error(err)
+
+    toast.add({
+      title: 'Error',
+      description: 'Failed to delete board.',
+      color: 'error',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
+  }
+}
+
 const filteredArchivedTasks = computed(() => {
   if (!archiveSearch.value.trim()) return archivedTasks.value
 
@@ -256,7 +359,6 @@ const filteredArchivedTasks = computed(() => {
     task.title.toLowerCase().includes(q)
   )
 })
-
 </script>
 
 <style scoped>
