@@ -19,7 +19,6 @@
                 <UButton color="info" :loading="inviteLoading" :disabled="!inviteEmail" @click="invite"> Invite </UButton>
               </div>
             </UCard>
-            <UDivider label="Board members" class="my-4" />
             <div class="space-y-2">
               <div v-for="member in members" :key="member.id" class="flex items-center justify-between p-2 rounded-md bg-[var(--secondary-grey)]">
                 <div class="flex items-center gap-3">
@@ -45,12 +44,42 @@
             </div>
           </template>
         </UModal>
+        <UPopover title="Archived task" :content="{side: 'bottom', sideOffset: 8 }" :ui="{content: 'bg-[var(--main-grey)] w-70 px-6 py-4'}">
+          <UButton icon="i-lucide-archive" color="secondary" variant="ghost"/>
+          <template #content>
+            <div class="flex flex-col items-center justify-center gap-4 mb-4">
+              <h2 class="text-highlighted font-semibold">
+                Archived tasks
+              </h2>
+              <UInput v-model="archiveSearch" icon="i-lucide-search" color="info" placeholder="Search archived tasks..." size="md" :ui="{ base: 'bg-[var(--secondary-grey)] ring-0 text-text-color' }" />
+            </div>
+
+            <div v-if="archivedTasks.length === 0" class="text-sm opacity-70 text-center py-6">
+              No archived tasks
+            </div>
+            <div v-else class="space-y-4">
+              <div v-if="filteredArchivedTasks.length === 0" class="text-sm opacity-60 text-center py-6">
+                No archived tasks found
+              </div>
+              <div v-for="task in filteredArchivedTasks" :key="task.id">
+              <div class="bg-[var(--secondary-grey)] rounded-lg p-2 text-sm shadow cursor-pointer hover:bg-[var(--ui-hover)]" @click="openArchivedTask(task)">
+                {{ task.title }}
+              </div>
+                <div class="flex gap-0 mt-1">
+                  <UButton size="xs" color="info" variant="ghost" @click.stop="restoreTask(task)">Restore</UButton>
+                  <UButton size="xs" color="error" variant="ghost" @click.stop="deleteTask(task)">Delete</UButton>
+                </div>
+              </div>
+            </div>
+          </template>
+        </UPopover>
       </div>
     </div>
     <ClientOnly>
       <Board v-if="board" v-model:board="board" @updated="getBoardData"/>
     </ClientOnly>
   </div>
+  <TaskModal v-if="selectedTask" :open="taskModalOpen" :task="selectedTask" :boardID="boardID!" :categories="board.map(c => c.id)" @close="taskModalOpen = false" :archived="true" @updated="getBoardData"/>
 </template>
 
 <script setup lang="ts">
@@ -96,6 +125,11 @@ const confirmOpen = ref(false)
 const memberToRemove = ref<string | null>(null)
 const boardOwnerEmail = ref<string | null>(null)
 
+const archivedTasks = ref<Task[]>([])
+const selectedTask = ref<Task | null>(null)
+const taskModalOpen = ref(false)
+const archiveSearch = ref('')
+
 const getBoardData = async () => {
   if (!auth.authenticated || !auth.jwt || !boardID.value) return
   api.setjwt(auth.jwt)
@@ -106,8 +140,14 @@ const getBoardData = async () => {
   boardColor.value = data.color ?? null
   members.value = data.members
   admins.value = data.admin ?? []
-  console.log(admins.value)
   boardOwnerEmail.value = data.owner.email
+
+  archivedTasks.value = [...(data.archived ?? [])].sort(
+  (a: any, b: any) =>
+    new Date(b.date_creation).getTime() -
+    new Date(a.date_creation).getTime()
+  )
+
   board.value = data.categories.map((category: string) => ({
   id: category,
   title: category,
@@ -178,6 +218,45 @@ function getLuminance(hex: string) {
 
   return (0.299 * r + 0.587 * g + 0.114 * b) / 255
 }
+
+function openArchivedTask(task: Task) {
+  selectedTask.value = { ...task }
+  taskModalOpen.value = true
+}
+
+async function restoreTask(task: Task) {
+  if (!boardID.value) return
+
+  try {
+    await api.restoreArchive(boardID.value, task.id)
+    await getBoardData()
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+async function deleteTask(task: Task) {
+  if (!boardID.value) return
+
+  try {
+    await api.deleteArchive(boardID.value, task.id)
+
+    archivedTasks.value = archivedTasks.value.filter(t => t.id !== task.id)
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+const filteredArchivedTasks = computed(() => {
+  if (!archiveSearch.value.trim()) return archivedTasks.value
+
+  const q = archiveSearch.value.toLowerCase()
+
+  return archivedTasks.value.filter(task =>
+    task.title.toLowerCase().includes(q)
+  )
+})
+
 </script>
 
 <style scoped>

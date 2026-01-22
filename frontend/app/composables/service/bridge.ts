@@ -192,6 +192,25 @@ export class bridge {
         }
     }
 
+    async restoreArchive(boardID: string, taskID: string) {
+        try {
+            const response = await fetch(this.url + `/v2/board/restore/task/` + boardID + `/` + taskID + `/`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + this.jwt
+                },
+            })
+            if (response.ok) {
+                return { status: response.status, success: true };
+            }
+            throw { status: response.status, success: false };
+        } catch (err) {
+            console.error('Network / delete task error', err);
+            throw err;
+        }
+    }
+
     async updateTask(boardID: string, taskID: string, data: any) {
         try {
             const response = await fetch(this.url + `/v2/board/update/task/` + boardID + `/` + taskID + `/`, {
