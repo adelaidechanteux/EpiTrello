@@ -1,8 +1,8 @@
 services:
-  web:
-    build: frontend/
-    ports:
-      - 3000:3000
+  # web:
+  #   build: frontend/
+  #   ports:
+  #     - 3000:3000
   backend:
     build: "backend/"
     ports:
@@ -14,10 +14,10 @@ services:
       DB_PORT: "5432"
       VALKEY_HOST: "valkey"
       VALKEY_PORT: "6379"
-      ALLOWED_HOSTS: "127.0.0.1"
+      ALLOWED_HOSTS: "127.0.0.1; localhost"
       CORS_ALLOWED_ORIGINS: "http://127.0.0.1:5080; http://localhost:3000"
       CSRF_TRUSTED_ORIGINS: "http://127.0.0.1:5080; http://localhost:3000"
-      ENVIRON: "production"
+      ENVIRON: "debug"
       DJANGO_SECRET_KEY: "django-insecure-2d6*a*m2@9y2%$+17#0j&#n+!lkh(a@*&j549u8ka6)uktemd0"
     depends_on:
       - "database"

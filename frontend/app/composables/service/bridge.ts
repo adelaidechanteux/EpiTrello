@@ -2,7 +2,7 @@ export class bridge {
     constructor() {
         console.log('Bridge instance created')
     }
-    url: string = "http://127.0.0.1:5081";
+    url: string = "http://127.0.0.1:5080";
     jwt: string = "";
 
     setjwt(new_jwt: string) {
