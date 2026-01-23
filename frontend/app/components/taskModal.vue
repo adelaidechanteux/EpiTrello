@@ -116,6 +116,16 @@ async function archive() {
 
 async function restoreTask() {
   try {
+
+    const categoryExists = props.categories.some(c => c === props.task.category)
+    if (!categoryExists) {
+      const nextCategories = [...props.categories.map(c => c), props.task.category]
+
+      await api.updateCategories(props.boardID, {
+        categories: nextCategories
+      })
+    }
+
     await api.restoreArchive(props.boardID, props.task.id)
     emit('updated', { ...props.task })
     close()
