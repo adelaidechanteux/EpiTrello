@@ -1,11 +1,10 @@
 from uuid import UUID
 from ninja import Router, Schema
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest
 from collections import OrderedDict
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
 
 from myboard.models import Board, Task, TITLE_LENGTH, CATEGORY_LENGTH, COLOR_LENGTH
+from myboard.utils import send_websocket
 from myauth.models import User
 from myauth.api import AUTH_CHECKS
 
@@ -26,14 +25,6 @@ OUTERROR_BadValue = (400, {"code": "BadValue", "message": "Value in a body value
 OUTERROR_TaskIsInvalid = (400, {"code": "TaskIsInvalid", "message": "Task is not in the good state to be processed by this call"})
 
 
-def send_websocket(board_id: str, type_: str, data: dict):
-    channel_layer = get_channel_layer()
-    if channel_layer is None:
-        raise ValueError("Channel Layer not set up")
-    async_to_sync(channel_layer.group_send)(f"board_{board_id}", {
-        "type": type_,
-        **data,
-    })
 
 
 class OUTMemberSchema(Schema):
