@@ -3,7 +3,10 @@
     <Draggable v-model="board" item-key="id" @end="onColumnReorder" group="columns" class="flex gap-4 p-4 overflow-x-auto" :animation="200">
       <template #item="{ element: column }">
         <div class="min-w-[260px] bg-(--ui-black) rounded-xl p-3 flex flex-col shadow hover:shadow-lg">
-          <h3 class="font-semibold mb-3 pl-3" >{{ column.title }}</h3>
+          <div class="flex items-center justify-between mb-3 pl-3 group">
+          <h3 class="font-semibold" >{{ column.title }}</h3>
+          <UButton v-if="column.cards.length === 0" icon="i-lucide-trash-2" size="xs" color="error" variant="ghost" class="opacity-0 group-hover:opacity-100 transition-opacity" @click.stop="deleteColumn(column.id)"/>
+          </div>
 
           <Draggable v-model="column.cards" item-key="id"  @end="onTaskReorder" group="cards" class="space-y-2 min-h-[40px]">
             <template #item="{ element }">
@@ -83,6 +86,7 @@ const board = defineModel<Column[]>('board', { required: true })
 const selectedTask = ref<Task | null>(null)
 const selectedColumnId = ref<string | null>(null)
 const taskModalOpen = ref(false)
+const toast = useToast()
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -140,24 +144,31 @@ async function addColumn() {
   const title = newColumnTitle.value.trim()
   if (!title) return
 
-  board.value.push({
-    id: title,
-    title,
-    cards: [],
-  })
-
-  newColumnTitle.value = ''
-  addingColumn.value = false
-
+  const nextCategories = [...board.value.map(col => col.title), title]
   try {
     await api.updateCategories(
       boardID,
       {
-        categories: board.value.map(col => col.title),
-      }
-    )
+        categories: nextCategories,
+      })
+    board.value.push({
+      id: title,
+      title,
+      cards: [],
+    })
+
+    newColumnTitle.value = ''
+    addingColumn.value = false
   } catch (err) {
-    console.error(err)
+    console.error('Failed to add column', err)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to add column.',
+      color: 'error',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
   }
 }
 
@@ -212,6 +223,20 @@ function openTask(card: Task) {
 
 function onTaskUpdated(updatedTask: Task) {
   emit('updated')
+}
+
+async function deleteColumn(columnId: string) {
+  const updatedColumns = board.value.filter(col => col.id !== columnId)
+
+  try {
+    await api.updateCategories(boardID, {
+      categories: updatedColumns.map(col => col.id)
+    })
+
+    board.value = updatedColumns
+  } catch (err) {
+    console.error('Failed to delete column', err)
+  }
 }
 
 </script>

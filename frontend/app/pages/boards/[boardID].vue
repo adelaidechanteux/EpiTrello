@@ -283,6 +283,22 @@ async function restoreTask(task: Task) {
   if (!boardID.value) return
 
   try {
+    const categoryExists = board.value.some(c => c.id === task.category)
+    if (!categoryExists) {
+      const nextCategories = [...board.value.map(c => c.id), task.category]
+      console.log(task.category, nextCategories)
+
+      await api.updateCategories(boardID.value, {
+        categories: nextCategories
+      })
+
+      board.value.push({
+        id: task.category,
+        title: task.category,
+        cards: []
+      })
+    }
+
     await api.restoreArchive(boardID.value, task.id)
     await getBoardData()
   } catch (err) {
