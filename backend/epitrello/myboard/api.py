@@ -223,6 +223,12 @@ def create_task(request: HttpRequest, board_id: UUID, body: InCreateTask):
         return OUTERROR_BadValue
     if body.description is None:
         body.description = ""
+    if body.assigned is not None:
+        try:
+            assigned = User.objects.get(email=body.assigned)
+        except User.DoesNotExist:
+            return OUTERROR_UserDoesNotExists
+        body.assigned = assigned
     optional_arg = {}
     for key in ("color", "date_start", "date_end", "assigned"):
         if getattr(body, key) is not None:
@@ -367,6 +373,18 @@ def update_task(request: HttpRequest, board_id: UUID, task_id: UUID, body: InUpd
         return OUTERROR_BadValue
     if body.color is not None and len(body.color) >= COLOR_LENGTH:
         return OUTERROR_BadValue
+    if body.owner is not None:
+        try:
+            owner = User.objects.get(email=body.owner)
+        except User.DoesNotExist:
+            return OUTERROR_UserDoesNotExists
+        body.owner = owner
+    if body.assigned is not None:
+        try:
+            assigned = User.objects.get(email=body.assigned)
+        except User.DoesNotExist:
+            return OUTERROR_UserDoesNotExists
+        body.assigned = assigned
     optional_arg: list[str] = []
     for key in ("title", "description", "color", "category", "date_start", "date_end", "owner", "assigned", "completed"):
         if getattr(body, key) is not None:
