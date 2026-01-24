@@ -362,49 +362,50 @@ const filteredArchivedTasks = computed(() => {
     task.title.toLowerCase().includes(q)
   )
 })
-// ws.onMessage((event) => {
-//   console.log('[WS EVENT]', event.type)
 
-//   switch (event.type) {
+ws.onMessage((event) => {
+  console.log('[WS EVENT]', event.type)
 
-//     case 'f_update_board':
-//       boardName.value = event.board_title
-//       boardColor.value = event.board_color
-//       boardOwnerEmail.value = event.board_owner.email
-//       break
+  switch (event.type) {
 
-//     case 'f_update_categories':
-//       board.value = event.categories.map((cat: string) => ({
-//         id: cat,
-//         title: cat,
-//         cards: board.value.find(c => c.id === cat)?.cards ?? []
-//       }))
-//       break
+    case 'f_update_board':
+      boardName.value = event.board_title
+      boardColor.value = event.board_color
+      boardOwnerEmail.value = event.board_owner.email
+      break
 
-//     case 'f_create_task':
-//     case 'f_update_task':
-//     case 'f_restore_task':
-//       getBoardData()
-//       break
+    case 'f_update_categories':
+      board.value = event.categories.map((cat: string) => ({
+        id: cat,
+        title: cat,
+        cards: board.value.find(c => c.id === cat)?.cards ?? []
+      }))
+      break
 
-//     // case 'f_delete_task':
-//     // case 'f_deleteforce_task':
-//     //   archivedTasks.value = archivedTasks.value.filter(t => t.id !== event.id)
-//     //   board.value.forEach(col => {
-//     //     col.cards = col.cards.filter(t => t.id !== event.id)
-//     //   })
-//     //   break
+    case 'f_create_task':
+    case 'f_update_task':
+    case 'f_restore_task':
+      getBoardData()
+      break
 
-//     case 'f_invit_board':
-//     case 'f_update_role':
-//     case 'f_delete_member':
-//       getBoardData()
-//       break
+    case 'f_delete_task':
+    case 'f_deleteforce_task':
+      archivedTasks.value = archivedTasks.value.filter(t => t.id !== event.id)
+      board.value.forEach(col => {
+        col.cards = col.cards.filter(t => t.id !== event.id)
+      })
+      break
 
-//     default:
-//       console.warn('[WS] unknown event', event)
-//   }
-// })
+    case 'f_invit_board':
+    case 'f_update_role':
+    case 'f_delete_member':
+      getBoardData()
+      break
+
+    default:
+      console.warn('[WS] unknown event', event)
+  }
+})
 </script>
 
 <style scoped>

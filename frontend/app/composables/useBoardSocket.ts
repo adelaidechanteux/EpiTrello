@@ -1,42 +1,65 @@
+import { ref, onBeforeUnmount } from 'vue'
 import { useAuthStore } from '~/store/auth'
 
 export function useBoardSocket(boardID: string) {
-    const auth = useAuthStore()
     const socket = ref<WebSocket | null>(null)
+    const connected = ref(false)
+    const auth = useAuthStore()
 
-    function connect() {
-        if (!auth.jwt) return
-        console.log("function connect")
+    const connect = () => {
+        if (!boardID || !auth.jwt) return
 
         socket.value = new WebSocket(
             `ws://localhost:5080/ws/board/${boardID}/`
         )
 
         socket.value.onopen = () => {
-            console.log("on open")
+            console.log('[WS] connected')
+
             socket.value?.send(JSON.stringify({
                 type: 'login',
                 Authorization: `Bearer ${auth.jwt}`
             }))
-        }
 
-        socket.value.onmessage = (event) => {
-            const data = JSON.parse(event.data)
-            console.log('[WS]', data)
-        }
-
-        socket.value.onerror = (err) => {
-            console.error('[WS error]', err)
+            connected.value = true
         }
 
         socket.value.onclose = () => {
-            console.warn('[WS closed]')
+            console.log('[WS] disconnected')
+            connected.value = false
+        }
+
+        socket.value.onerror = (err) => {
+            console.error('[WS] error', err)
+        }
+
+        socket.value.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data)
+                handleMessage(data)
+            } catch {
+                console.warn('[WS] invalid JSON', event.data)
+            }
         }
     }
 
-    function disconnect() {
+    const disconnect = () => {
         socket.value?.close()
+        socket.value = null
     }
 
-    return { connect, disconnect }
+    onBeforeUnmount(disconnect)
+
+    let handleMessage = (_: any) => { }
+
+    const onMessage = (fn: (data: any) => void) => {
+        handleMessage = fn
+    }
+
+    return {
+        connect,
+        disconnect,
+        connected,
+        onMessage
+    }
 }

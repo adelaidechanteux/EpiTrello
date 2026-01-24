@@ -117,7 +117,7 @@ export class bridge {
 
     async deleteBoard(boardID: string) {
         try {
-            const response = await fetch(this.url + `/v2/board/delete/board/` + boardID, {
+            const response = await fetch(this.url + `/v2/board/delete/board/` + boardID + `/`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
