@@ -36,7 +36,7 @@ In case of success
 ```json
 {
     "type": "login", # const
-    "success": True, # const
+    "success": true, # const
     "connected": ["me@a.com", "other@dot.com"]
 }
 ```
@@ -46,7 +46,7 @@ In case of failure
 ```json
 {
     "type": "login", # const
-    "success": False, # const
+    "success": false, # const
     "code": "",
     "error": ""
 }
@@ -57,7 +57,7 @@ In case of failure
 ```json
 {
     "type": "f_invit_board", # const
-    "admin": True,
+    "admin": true,
     "user": {
         "id": "",
         "username": "",
@@ -196,7 +196,7 @@ In case of failure
         "email": "",
         "profile_picture": ""
     },
-    "admin": True
+    "admin": true
 }
 ```
 
