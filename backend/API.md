@@ -27,7 +27,30 @@ The first message that needs to be sent is the login event.
 
 ## Events received
 
-After the login event sent, events will be sent.
+After the login event sent you will receive a `login` event. Then there will be more event received.
+
+### `login`
+
+In case of success
+
+```json
+{
+    "type": "login", # const
+    "success": True, # const
+    "connected": ["me@a.com", "other@dot.com"]
+}
+```
+
+In case of failure
+
+```json
+{
+    "type": "login", # const
+    "success": False, # const
+    "code": "",
+    "error": ""
+}
+```
 
 ### `f_invit_board`
 
@@ -37,9 +60,9 @@ After the login event sent, events will be sent.
     "admin": True,
     "user": {
         "id": "",
-        username: "",
-        email: "",
-        profile_picture: ""
+        "username": "",
+        "email": "",
+        "profile_picture": ""
     }
 }
 ```
@@ -61,9 +84,9 @@ After the login event sent, events will be sent.
     "board_title": "",
     "board_owner": {
         "id": "",
-        username: "",
-        email: "",
-        profile_picture: ""
+        "username": "",
+        "email": "",
+        "profile_picture": ""
     },
     "board_color": ""
 }
@@ -169,10 +192,38 @@ After the login event sent, events will be sent.
     "type": "f_update_role", # const
     "user": {
         "id": "",
-        username: "",
-        email: "",
-        profile_picture: ""
+        "username": "",
+        "email": "",
+        "profile_picture": ""
     },
     "admin": True
+}
+```
+
+### `f_connected_user`
+
+```json
+{
+    "type": "f_connected_user", # const
+    "user": {
+        "id": "",
+        "username": "",
+        "email": "",
+        "profile_picture": ""
+    },
+}
+```
+
+### `f_disconnected_user`
+
+```json
+{
+    "type": "f_disconnected_user", # const
+    "user": {
+        "id": "",
+        "username": "",
+        "email": "",
+        "profile_picture": ""
+    },
 }
 ```

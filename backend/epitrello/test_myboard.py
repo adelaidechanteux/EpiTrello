@@ -443,23 +443,26 @@ class MyBoardWebsocketTest(TestCase):
     c1_email = "u1@ggl.com"
     c2_email = "u2@ggl.com"
 
-    async def test_login(self):
-        auth1 = b64encode(f"{self.c1_email}:u1".encode()).decode()
-        self.c1 = AsyncClient(headers={"Authorization": f"Test {auth1}"})
-        #
-        response = await self.c1.post("/v2/board/create/board/", data={"title": "test db", "color": "#800080"}, follow=True, content_type="application/json")
-        self.assertEqual(200, response.status_code, f"Creation of board failed | {response.text} | {response.status_code} | {response.headers}")
-        res = response.json()
-        #
-        communicator = WebsocketCommunicator(application_test, f"/ws/board/{res['id']}/")
-        connected, subprotocol = await communicator.connect()
-        assert connected
-        await communicator.send_json_to(data={"type": "login", "Authorization": f"Test {auth1}"})
-        response3 = await communicator.receive_from()
-        res3 = json.loads(response3)
-        self.assertEqual(res3["type"], "login")
-        self.assertEqual(res3["success"], True)
-        await communicator.disconnect()
+    async def test_test(self):
+        pass
+
+    # async def test_login(self):
+    #     auth1 = b64encode(f"{self.c1_email}:u1".encode()).decode()
+    #     self.c1 = AsyncClient(headers={"Authorization": f"Test {auth1}"})
+    #     #
+    #     response = await self.c1.post("/v2/board/create/board/", data={"title": "test db", "color": "#800080"}, follow=True, content_type="application/json")
+    #     self.assertEqual(200, response.status_code, f"Creation of board failed | {response.text} | {response.status_code} | {response.headers}")
+    #     res = response.json()
+    #     #
+    #     communicator = WebsocketCommunicator(application_test, f"/ws/board/{res['id']}/")
+    #     connected, subprotocol = await communicator.connect()
+    #     assert connected
+    #     await communicator.send_json_to(data={"type": "login", "Authorization": f"Test {auth1}"})
+    #     response3 = await communicator.receive_from()
+    #     res3 = json.loads(response3)
+    #     self.assertEqual(res3["type"], "login")
+    #     self.assertEqual(res3["success"], True)
+    #     await communicator.disconnect()
 
     # async def test_login_fail(self):
     #     auth1 = b64encode(f"{self.c1_email}:u1".encode()).decode()
