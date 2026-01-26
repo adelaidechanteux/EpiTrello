@@ -2,7 +2,7 @@
   <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click="emit('close')">
     <div class="bg-(--secondary-grey) rounded-xl p-6 max-w-xl w-full shadow-lg" @click.stop>
       <div class="flex items-center justify-between mb-4">
-        <span class="text-lg font-semibold text-[var(--text-color)]">
+        <span class="text-lg font-semibold text-(--fixed-text-color)">
           Task details
         </span>
         <div v-if="!archived">
@@ -69,20 +69,19 @@ watch(
   }
 )
 
-function toDateInput(value?: string | null): string | null {
-  if (!value) return null
-
-  const date =
-    value.includes('T')
-      ? value.split('T')[0]
-      : value.split(' ')[0]
-
-  return date ?? null
-}
-
 function close() {
     console.log(props.categories)
   emit('close')
+}
+
+function toDateInput(value?: string | null): string | null {
+  if (!value) return null
+  return value.slice(0, 10)
+}
+
+function toUtcSafeDate(date: string | null) {
+  if (!date) return null
+  return `${date}T12:00:00Z`
 }
 
 async function save() {
@@ -91,8 +90,8 @@ async function save() {
       ...form,
       description: form.description === "" ? null : form.description,
       color: form.color === "" ? null : form.color,
-      date_start: form.date_start === "" ? null : form.date_start,
-      date_end: form.date_end === "" ? null : form.date_end,
+      date_start: toUtcSafeDate(form.date_start),
+      date_end: toUtcSafeDate(form.date_end),
       assigned: form.assigned === "" ? null : form.assigned,
     }
 

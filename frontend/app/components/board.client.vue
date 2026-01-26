@@ -11,23 +11,16 @@
           <Draggable v-model="column.cards" item-key="id"  @end="onTaskReorder" group="cards" class="space-y-2 min-h-[40px]">
             <template #item="{ element }">
               <div class="group relative bg-(--secondary-grey) rounded-lg p-2 text-sm shadow cursor-pointer hover:border-2 border-info flex items-center gap-2 overflow-hidden" @click="openTask(element)">
-                <UButton
-                  :color="element.completed ? 'success' : 'secondary'"
-                  variant="soft"
-                  :icon="element.completed ? 'i-lucide-circle-check' : ''"
-                  class="transition-all duration-500 ease-out cursor-pointer
-                    rounded-full w-5 h-5 p-0
-                    -ml-6 opacity-0 translate-x-[-6px]
-                    group-hover:ml-0 group-hover:opacity-100 group-hover:translate-x-0"
-                  :class="element.completed
-                    ? 'ml-0 opacity-100 translate-x-0'
-                    : 'border-2 border-(--fixed-text-color)'"
-                  @click.stop="toggleCompleted(element)"
-                />
-
-                <span
-                  class="flex-1 transition-all">
-                  {{ element.title }}
+                <UButton :color="element.completed ? 'success' : 'secondary'" variant="soft" :icon="element.completed ? 'i-lucide-circle-check' : ''"
+                  class="transition-all duration-500 ease-out cursor-pointer rounded-full w-5 h-5 p-0 -ml-6 opacity-0 translate-x-[-6px] group-hover:ml-0 group-hover:opacity-100 group-hover:translate-x-0"
+                  :class="element.completed ? 'ml-0 opacity-100 translate-x-0' : 'border-2 border-(--fixed-text-color)'" @click.stop="toggleCompleted(element)"/>
+                <span class="flex-1 flex flex-col transition-all">
+                  <span>
+                    {{ element.title }}
+                  </span>
+                  <span v-if="element.date_end" class="inline-block text-xs mt-1 p-2 py-0.5 w-14 rounded-md transition-colors" :class="dateColorClass(element)">
+                    {{ formatDate(element.date_end) }}
+                  </span>
                 </span>
               </div>
             </template>
@@ -276,7 +269,7 @@ async function toggleCompleted(task: Task) {
     })
   } catch (err) {
     console.error('Failed to update task', err)
-    task.completed = previous // rollback
+    task.completed = previous
     toast.add({
       title: 'Error',
       description: 'Failed to update task status.',
@@ -286,6 +279,46 @@ async function toggleCompleted(task: Task) {
       },
     })
   }
+}
+
+function formatDate(date: string) {
+  return new Date(date).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+function isOverdue(date: string) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const due = new Date(date)
+  due.setHours(0, 0, 0, 0)
+
+  return due <= today
+}
+
+function isDueSoon(date: string) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const due = new Date(date)
+  due.setHours(0, 0, 0, 0)
+
+  const diffDays = (due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+
+  return diffDays >= 0 && diffDays < 3
+}
+
+function dateColorClass(task: Task) {
+  if (task.completed) {
+    return 'bg-green-500/20 text-green-700 dark:text-green-400'
+  }
+  if (task.date_end && isOverdue(task.date_end)) {
+    return 'bg-red-500/20 text-red-700 dark:text-red-400'
+  }
+  if (task.date_end && isDueSoon(task.date_end)) {
+    return 'bg-orange-500/20 text-orange-700 dark:text-orange-400'
+  }
+  return ''
 }
 
 </script>
