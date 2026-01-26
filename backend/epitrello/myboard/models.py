@@ -46,6 +46,13 @@ class Task(models.Model):
     completed = models.BooleanField(default=False)
 
 
+
+@final
+class UserConnected(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    nb_connected = models.IntegerField()
+
+
 @final
 class Board(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -63,6 +70,7 @@ class Board(models.Model):
     color = models.CharField(
         max_length=COLOR_LENGTH, default=COLOR_CHOICE
     )
+    user_connected = models.ManyToManyField(to=UserConnected)
 
 
 @final

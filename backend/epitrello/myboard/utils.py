@@ -3,7 +3,8 @@ from uuid import UUID
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
-from myboard.models import Board
+from myboard.models import Board, UserConnected
+from myboard.schemas import OUTMemberSchema
 from myauth.models import User
 
 
@@ -16,6 +17,47 @@ def does_user_access_board(u: User, board_id: UUID):
         return True
     return False
 
+def connect_user_board(u: User, board_id: UUID):
+    try:
+        b = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        return False
+    try:
+        c = b.user_connected.get(user=u)
+    except UserConnected.DoesNotExist:
+        c = UserConnected(user=u, nb_connected=1)
+        c.save()
+        b.user_connected.add(c)
+        send_websocket(f"{board_id}", "f_connected_user", {
+            "user": OUTMemberSchema.from_orm(u).dict(),
+        })
+        return [f"{x.user.email}" for x in b.user_connected.all()]
+    c.nb_connected = c.nb_connected + 1
+    c.save(update_fields=["nb_connected"])
+    return [f"{x.user.email}" for x in b.user_connected.all()]
+
+def disconnect_user_board(uid: UUID, board_id: UUID):
+    try:
+        u = User.objects.get(pk=uid)
+    except Board.DoesNotExist:
+        return False
+    try:
+        b = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        return False
+    try:
+        c = b.user_connected.get(user=u)
+    except UserConnected.DoesNotExist:
+        return False
+    c.nb_connected = c.nb_connected - 1
+    if c.nb_connected == 0:
+        send_websocket(f"{board_id}", "f_disconnected_user", {
+            "user": OUTMemberSchema.from_orm(u).dict(),
+        })
+        b.user_connected.remove(c)
+        return True
+    c.save(update_fields=["nb_connected"])
+    return True
 
 
 def serialize_data(v):
