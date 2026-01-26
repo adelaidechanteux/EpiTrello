@@ -2,7 +2,7 @@ export class bridge {
     constructor() {
         console.log('Bridge instance created')
     }
-    url: string = "http://127.0.0.1:5081";
+    url: string = "http://127.0.0.1:5080";
     jwt: string = "";
 
     setjwt(new_jwt: string) {
@@ -117,7 +117,7 @@ export class bridge {
 
     async deleteBoard(boardID: string) {
         try {
-            const response = await fetch(this.url + `/v2/board/delete/board/` + boardID, {
+            const response = await fetch(this.url + `/v2/board/delete/board/` + boardID + `/`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

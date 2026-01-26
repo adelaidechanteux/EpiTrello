@@ -23,9 +23,9 @@ def check_google_auth(id_token: str) -> HttpResponseForbidden | User:
         user_email = idinfo["email"]
         user_picture = idinfo.get("picture")
         user_name = idinfo["name"]
-    except ValueError:
+    except ValueError as esc:
         return HttpResponseForbidden(
-            "Google auth provider did not validate your id token",
+            f"Google auth provider did not validate your id token: {esc}",
             content_type="plain/text",
         )
     try:

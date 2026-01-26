@@ -116,8 +116,9 @@
 </template>
 
 <script setup lang="ts">
-import { useAuthStore } from '~/store/auth'
-import type { Task, Column } from '~/composables/types/board'
+import { useAuthStore } from '~/store/auth';
+import type { Task, Column } from '~/composables/types/board';
+import { useBoardSocket } from '~/composables/useBoardSocket';
 
 const route = useRoute()
 const boardID = computed(() => {
@@ -127,8 +128,9 @@ const boardID = computed(() => {
 
 const { $bridge } = useNuxtApp()
 const api = $bridge
-
+const ws = useBoardSocket(boardID.value!)
 const auth = useAuthStore()
+
 const board = ref<Column[]>([])
 const boardName = ref('')
 const boardColor = ref<string | null>(null)
@@ -239,6 +241,7 @@ async function confirmRemoveMember() {
 
 onMounted(async () => {
   await getBoardData();
+  ws.connect()
 })
 
 function hexToRgb(hex: string) {
@@ -374,6 +377,50 @@ const filteredArchivedTasks = computed(() => {
   return archivedTasks.value.filter(task =>
     task.title.toLowerCase().includes(q)
   )
+})
+
+ws.onMessage((event) => {
+  console.log('[WS EVENT]', event.type)
+
+  switch (event.type) {
+
+    case 'f_update_board':
+      boardName.value = event.board_title
+      boardColor.value = event.board_color
+      boardOwnerEmail.value = event.board_owner.email
+      break
+
+    case 'f_update_categories':
+      board.value = event.categories.map((cat: string) => ({
+        id: cat,
+        title: cat,
+        cards: board.value.find(c => c.id === cat)?.cards ?? []
+      }))
+      break
+
+    case 'f_create_task':
+    case 'f_update_task':
+    case 'f_restore_task':
+      getBoardData()
+      break
+
+    case 'f_delete_task':
+    case 'f_deleteforce_task':
+      archivedTasks.value = archivedTasks.value.filter(t => t.id !== event.id)
+      board.value.forEach(col => {
+        col.cards = col.cards.filter(t => t.id !== event.id)
+      })
+      break
+
+    case 'f_invit_board':
+    case 'f_update_role':
+    case 'f_delete_member':
+      getBoardData()
+      break
+
+    default:
+      console.warn('[WS] unknown event', event)
+  }
 })
 </script>
 
