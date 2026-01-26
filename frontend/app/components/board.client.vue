@@ -10,8 +10,25 @@
 
           <Draggable v-model="column.cards" item-key="id"  @end="onTaskReorder" group="cards" class="space-y-2 min-h-[40px]">
             <template #item="{ element }">
-              <div class="bg-(--secondary-grey) color-(--ui-info) rounded-lg p-2 text-sm shadow" @click="openTask(element)">
-                {{ element.title }}
+              <div class="group relative bg-(--secondary-grey) rounded-lg p-2 text-sm shadow cursor-pointer hover:border-2 border-info flex items-center gap-2 overflow-hidden" @click="openTask(element)">
+                <UButton
+                  :color="element.completed ? 'success' : 'secondary'"
+                  variant="soft"
+                  :icon="element.completed ? 'i-lucide-circle-check' : ''"
+                  class="transition-all duration-500 ease-out cursor-pointer
+                    rounded-full w-5 h-5 p-0
+                    -ml-6 opacity-0 translate-x-[-6px]
+                    group-hover:ml-0 group-hover:opacity-100 group-hover:translate-x-0"
+                  :class="element.completed
+                    ? 'ml-0 opacity-100 translate-x-0'
+                    : 'border-2 border-(--fixed-text-color)'"
+                  @click.stop="toggleCompleted(element)"
+                />
+
+                <span
+                  class="flex-1 transition-all">
+                  {{ element.title }}
+                </span>
               </div>
             </template>
 
@@ -106,6 +123,7 @@ async function addCard(column: Column) {
     date_start: null,
     date_end: null,
     assigned: null,
+    completed: false
   }
 
   column.cards.push(placeholder)
@@ -131,6 +149,14 @@ async function addCard(column: Column) {
   } catch (err) {
     console.error(err)
     column.cards = column.cards.filter(c => c !== placeholder)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to add task.',
+      color: 'error',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
   }
 }
 
@@ -217,6 +243,7 @@ function openTask(card: Task) {
     date_start: card.date_start,
     date_end: card.date_end,
     assigned: card.assigned,
+    completed: card.completed
   }
   taskModalOpen.value = true
 }
@@ -236,6 +263,28 @@ async function deleteColumn(columnId: string) {
     board.value = updatedColumns
   } catch (err) {
     console.error('Failed to delete column', err)
+  }
+}
+
+async function toggleCompleted(task: Task) {
+  const previous = task.completed
+  task.completed = !task.completed
+
+  try {
+    await api.updateTask(boardID, task.id, {
+      completed: task.completed,
+    })
+  } catch (err) {
+    console.error('Failed to update task', err)
+    task.completed = previous // rollback
+    toast.add({
+      title: 'Error',
+      description: 'Failed to update task status.',
+      color: 'error',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
   }
 }
 

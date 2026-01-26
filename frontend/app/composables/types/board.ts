@@ -7,6 +7,7 @@ export interface Task {
     date_start: string | null
     date_end: string | null
     assigned: string | null
+    completed: boolean
 }
 
 export interface Column {

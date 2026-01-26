@@ -1,5 +1,5 @@
 <template>
-  <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+  <div v-if="open" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click="emit('close')">
     <div class="bg-(--secondary-grey) rounded-xl p-6 max-w-xl w-full shadow-lg">
       <div class="flex items-center justify-between mb-4">
         <span class="text-lg font-semibold text-[var(--text-color)]">
