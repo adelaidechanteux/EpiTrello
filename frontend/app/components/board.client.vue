@@ -10,17 +10,32 @@
 
           <Draggable v-model="column.cards" item-key="id"  @end="onTaskReorder" group="cards" class="space-y-2 min-h-[40px]">
             <template #item="{ element }">
-              <div class="group relative bg-(--secondary-grey) rounded-lg p-2 text-sm shadow cursor-pointer hover:border-2 border-info flex items-center gap-2 overflow-hidden" @click="openTask(element)">
-                <UButton :color="element.completed ? 'success' : 'secondary'" variant="soft" :icon="element.completed ? 'i-lucide-circle-check' : ''"
-                  class="transition-all duration-500 ease-out cursor-pointer rounded-full w-5 h-5 p-0 -ml-6 opacity-0 translate-x-[-6px] group-hover:ml-0 group-hover:opacity-100 group-hover:translate-x-0"
-                  :class="element.completed ? 'ml-0 opacity-100 translate-x-0' : 'border-2 border-(--fixed-text-color)'" @click.stop="toggleCompleted(element)"/>
+              <div class="group relative bg-(--secondary-grey) rounded-lg p-2 text-sm shadow cursor-pointer border-2 border-(--secondary-grey) hover:border-info flex items-center gap-2 overflow-hidden" @click="openTask(element)">
+                <UIcon name="i-lucide-square-pen" class="absolute top-1 right-1 opacity-0 group-hover:opacity-100"/>
                 <span class="flex-1 flex flex-col transition-all">
-                  <span>
-                    {{ element.title }}
-                  </span>
-                  <span v-if="element.date_end" class="inline-block text-xs mt-1 p-2 py-0.5 w-14 rounded-md transition-colors" :class="dateColorClass(element)">
-                    {{ formatDate(element.date_end) }}
-                  </span>
+                  <div class="mt-1 flex items-center gap-2">
+                    <UTooltip :text="element.completed ? 'Mark Uncomplete' : 'Mark Complete'" :ui="{ content: 'bg-(--secondary-grey) text-color-(--fixed-text-color)' }">
+                      <UButton :color="element.completed ? 'success' : 'secondary'" variant="soft" :icon="element.completed ? 'i-lucide-circle-check' : ''"
+                      class="transition-all duration-500 ease-out cursor-pointer rounded-full w-5 h-5 p-0 -ml-6 opacity-0 translate-x-[-6px] group-hover:ml-0 group-hover:opacity-100 group-hover:translate-x-0"
+                      :class="element.completed ? 'ml-0 opacity-100 translate-x-0' : 'border-2 border-(--fixed-text-color)'" @click.stop="toggleCompleted(element)"/>
+                    </UTooltip>
+                    <span>
+                      {{ element.title }}
+                    </span>
+                  </div>
+                  <div class="mt-1 flex items-center gap-2 w-full">
+                    <span v-if="element.date_end" class="inline-block text-xs mt-1 p-2 py-0.5 w-14 rounded-md transition-colors" :class="dateColorClass(element)">
+                      {{ formatDate(element.date_end) }}
+                    </span>
+                      <UTooltip text="This task has a description" :ui="{ content: 'bg-(--secondary-grey) text-color-(--fixed-text-color)' }">
+                        <UIcon v-if="element.description" name="i-lucide-align-left" class="w-4 h-4 opacity-50 hover:opacity-100 transition-opacity" />
+                      </UTooltip>
+                      <UAvatarGroup v-if="assignedUsers(element).length" size="sm" max="3" class="ml-auto flex items-center -space-x-2">
+                        <UTooltip v-for="user in assignedUsers(element)" :key="user.id" :text="user.username" :ui="{ content: 'bg-(--secondary-grey) text-(--fixed-text-color)' }">
+                          <UAvatar :src="user.profile_picture" :alt="user.username" class="w-6 h-6 rounded-full object-cover shadow-sm transition-transform"/>
+                        </UTooltip>
+                      </UAvatarGroup>
+                    </div>
                 </span>
               </div>
             </template>
@@ -321,4 +336,8 @@ function dateColorClass(task: Task) {
   return ''
 }
 
+function assignedUsers(task: any) {
+  if (!task.assigned) return []
+  return Array.isArray(task.assigned) ? task.assigned : [task.assigned]
+}
 </script>

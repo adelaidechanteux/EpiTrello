@@ -95,9 +95,9 @@
                 No archived tasks found
               </div>
               <div v-for="task in filteredArchivedTasks" :key="task.id">
-              <div class="bg-[var(--secondary-grey)] rounded-lg p-2 text-sm shadow cursor-pointer hover:bg-[var(--ui-hover)]" @click="openArchivedTask(task)">
-                {{ task.title }}
-              </div>
+                <div class="bg-[var(--secondary-grey)] rounded-lg p-2 text-sm shadow cursor-pointer hover:bg-[var(--ui-hover)]" @click="openArchivedTask(task)">
+                  {{ task.title }}
+                </div>
                 <div class="flex gap-0 mt-1">
                   <UButton size="xs" color="info" variant="ghost" @click.stop="restoreTask(task)">Restore</UButton>
                   <UButton size="xs" color="error" variant="ghost" @click.stop="deleteTask(task)">Delete</UButton>
