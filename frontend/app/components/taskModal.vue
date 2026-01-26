@@ -9,7 +9,7 @@
           <UButton icon="i-lucide-archive" color="error" variant="ghost" size="sm" @click="archive"> Archive</UButton>
         </div>
         <div v-else>
-          <UButton icon="i-lucide-archive" color="neutral" variant="ghost" size="sm" @click="restoreTask">Restore from Archives</UButton>
+          <UButton icon="i-lucide-archive" color="secondary" variant="ghost" size="sm" @click="restoreTask">Restore from Archives</UButton>
         </div>
       </div>
       <div class="mb-4">
