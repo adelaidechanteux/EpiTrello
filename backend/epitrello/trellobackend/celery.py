@@ -13,12 +13,11 @@ app.autodiscover_tasks()
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender: Celery, **kwargs):
     # every 4 hours.
-    sender.add_periodic_task(4 * 60 * 60, send_email_task_near_date_end.s(), name='check tasks that are near the end and send an email to the assignee or the owner.')
-    send_email_task_near_date_end.delay()
+    sender.add_periodic_task(30, send_email_task_near_date_end.s(), name='check tasks that are near the end and send an email to the assignee or the owner.')
 
 @app.task(bind=True, ignore_result=True)
 def send_email_task_near_date_end(self):
-    print(f'Request1: {self.request!r}')
+    print(f'Request1')
     from myboard.models import Task
     from django.utils import timezone
     from django.conf import settings
