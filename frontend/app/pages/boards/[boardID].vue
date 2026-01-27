@@ -47,7 +47,7 @@
         <UPopover :content="{side: 'bottom', sideOffset: 8 }" :ui="{content: 'bg-[var(--main-grey)] w-70 p-4'}">
           <UButton icon="i-lucide-ellipsis" color="secondary" variant="ghost"/>
           <template #content>
-            <div class="flex flex-col items-center gap-4">
+            <div v-if=" auth.user.email == boardOwnerEmail || admins.some(a => a.email === auth.user.email)" class="flex flex-col items-center gap-4">
               <UModal title="Change Board Color" :ui="{ body: 'bg-[var(--secondary-grey)] flex flex-col items-center justify-center gap-2', content: 'bg-[var(--secondary-grey)] ring-0 w-60', overlay: 'bg-[var(--ui-overlay)]', header: 'border-[var(--text-color)]', close: 'hover:bg-(--ui-hover)'}">
                 <UButton label="Open" color="secondary" variant="ghost" size="md" :ui="{ base: 'rounded-sm w-60 text-[var(--text-color)]'}">Board Color</UButton>
                 <template #body>
@@ -65,15 +65,47 @@
               </UModal>
 
               <UModal title="Delete Board" description="Are you sure you want to delete this board ?" :ui="{ body: 'bg-[var(--secondary-grey)] flex flex-col items-center justify-center gap-2', content: 'bg-[var(--secondary-grey)] ring-0 w-80', overlay: 'bg-[var(--ui-overlay)]', header: 'border-[var(--text-color)]', close: 'hover:bg-(--ui-hover)'}">
-                <UButton label="Open" color="secondary" variant="ghost" size="md" :ui="{ base: 'rounded-sm w-60 text-[var(--text-color)]'}">Delete Board</UButton>
-                <template #body v-if=" auth.user.email == boardOwnerEmail">
+                <UTooltip :text="auth.user.email == boardOwnerEmail? 'Delete this board' : 'You do not have permission to delete this board'" :ui="{ content: 'bg-(--secondary-grey) text-color-(--fixed-text-color)' }">
+                  <UButton :disabled="auth.user.email == boardOwnerEmail? false : true" label="Open" color="error" variant="ghost" size="md" :ui="{ base: 'rounded-sm w-60'}">Delete Board</UButton>
+                </UTooltip>
+                  <template #body>
                     <UButton size="md" color="error"  :ui="{base: 'text-[var(--ui-primary)]'}" @click.stop="deleteBoard()">Delete</UButton>
                   </template>
-                  <template #body v-else>
-                    <h2>You do not have the permission to delete this board</h2>
-                    <UButton size="md" color="error" disabled :ui="{base: 'text-[var(--ui-primary)] mt-4 disabled:opacity-50'}" @click.stop="deleteBoard()">Delete</UButton>
+              </UModal>
+            </div>
+            <div v-else>
+              <UModal title="Change Board Color" :ui="{ body: 'bg-[var(--secondary-grey)] flex flex-col items-center justify-center gap-2', content: 'bg-[var(--secondary-grey)] ring-0 w-60', overlay: 'bg-[var(--ui-overlay)]', header: 'border-[var(--text-color)]', close: 'hover:bg-(--ui-hover)'}">
+                <UTooltip text="You do not have permission to modify this board" :ui="{ content: 'bg-(--secondary-grey) text-color-(--fixed-text-color)' }">
+                  <UButton disabled label="Open" color="secondary" variant="ghost" size="md" :ui="{ base: 'rounded-sm w-60 text-[var(--text-color)]'}">Board Color</UButton>
+                </UTooltip>
+                <template #body>
+                  <UColorPicker v-model="color"></UColorPicker>
+                  <UButton size="md" color="secondary" variant="ghost" :ui="{base: 'text-[var(--text-color)]'}" @click.stop="updateBoardColor()">Change</UButton>
                 </template>
               </UModal>
+
+              <UModal title="Change Board Name" :ui="{ body: 'bg-[var(--secondary-grey)] flex flex-col items-center justify-center gap-2', content: 'bg-[var(--secondary-grey)] ring-0 w-60', overlay: 'bg-[var(--ui-overlay)]', header: 'border-[var(--text-color)]', close: 'hover:bg-(--ui-hover)'}">
+                <UTooltip text="You do not have permission to modify this board" :ui="{ content: 'bg-(--secondary-grey) text-color-(--fixed-text-color)' }">
+                  <UButton disabled label="Open" color="secondary" variant="ghost" size="md" :ui="{ base: 'rounded-sm w-60 text-[var(--text-color)]'}">Board Name</UButton>
+                </UTooltip>
+                  <template #body>
+                    <UInput v-model="NewBoardName" color="info" :ui="{ base: 'bg-[var(--secondary-grey)] border-[var(--text-color)]'}"/>
+                    <UButton size="md" color="secondary" variant="ghost" :ui="{base: 'text-[var(--text-color)]'}" @click.stop="updateBoardName()">Change</UButton>
+                  </template>
+                </UModal>
+
+                <UModal title="Delete Board" description="Are you sure you want to delete this board ?" :ui="{ body: 'bg-[var(--secondary-grey)] flex flex-col items-center justify-center gap-2', content: 'bg-[var(--secondary-grey)] ring-0 w-80', overlay: 'bg-[var(--ui-overlay)]', header: 'border-[var(--text-color)]', close: 'hover:bg-(--ui-hover)'}">
+                  <UTooltip text="You do not have permission to delete this board" :ui="{ content: 'bg-(--secondary-grey) text-color-(--fixed-text-color)' }">
+                    <UButton disabled label="Open" color="error" variant="ghost" size="md" :ui="{ base: 'rounded-sm w-60'}">Delete Board</UButton>
+                  </UTooltip>
+                  <template #body v-if=" auth.user.email == boardOwnerEmail">
+                      <UButton size="md" color="error"  :ui="{base: 'text-[var(--ui-primary)]'}" @click.stop="deleteBoard()">Delete</UButton>
+                    </template>
+                    <template #body v-else>
+                      <h2>You do not have the permission to delete this board</h2>
+                      <UButton size="md" color="error" disabled :ui="{base: 'text-[var(--ui-primary)] mt-4 disabled:opacity-50'}" @click.stop="deleteBoard()">Delete</UButton>
+                  </template>
+                </UModal>
             </div>
           </template>
         </UPopover>
@@ -125,7 +157,14 @@
                 </div>
                 <div class="flex gap-0 mt-1">
                   <UButton size="xs" color="info" variant="ghost" @click.stop="restoreTask(task)">Restore</UButton>
-                  <UButton size="xs" color="error" variant="ghost" @click.stop="deleteTask(task)">Delete</UButton>
+                  <div v-if=" auth.user.email == boardOwnerEmail || admins.some(a => a.email === auth.user.email)">
+                    <UButton size="xs" color="error" variant="ghost" @click.stop="deleteTask(task)">Delete</UButton>
+                  </div>
+                  <div v-else>
+                    <UTooltip text="You do not have permission to delete archives" :ui="{ content: 'bg-(--secondary-grey) text-color-(--fixed-text-color)' }">
+                      <UButton disabled size="xs" color="error" variant="ghost" @click.stop="deleteTask(task)">Delete</UButton>
+                    </UTooltip>
+                  </div>
                 </div>
               </div>
             </div>
