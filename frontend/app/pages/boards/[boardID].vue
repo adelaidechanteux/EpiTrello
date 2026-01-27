@@ -27,19 +27,57 @@
                     <span class="text-sm font-medium">
                       {{ member.email }}
                     </span>
-                    <span class="text-xs opacity-70">
-                      {{ admins.some(a => a.email === member.email) ? 'Admin' : 'Member' }}
+                    <span v-if="member.email == boardOwnerEmail" class="text-xs opacity-70">
+                      Owner
+                    </span>
+                    <span v-else-if="admins.some(a => a.email === member.email)" class="text-xs opacity-70">
+                      Admin
+                    </span>
+                    <span v-else class="text-xs opacity-70">
+                      Member
                     </span>
                   </div>
                 </div>
-                <UModal v-model="confirmOpen" title="Remove member" description="Are you sure you want to remove this member from the board?" :ui="{ body: 'bg-[var(--secondary-grey)]', content: 'bg-[var(--secondary-grey)] ring-0 w-80', overlay: 'bg-[var(--ui-overlay)]', header: 'border-[var(--text-color)]', close: 'hover:bg-(--ui-hover)'}">
-                  <UButton v-if="member.email !== boardOwnerEmail" icon="i-lucide-x" size="xs" color="error" variant="ghost" @click="askRemoveMember(member.email)"/>
+                <div v-if="auth.user.email == boardOwnerEmail">
+                  <UModal v-model="confirmOpen" title="Remove member" description="Are you sure you want to remove this member from the board?" :ui="{ body: 'bg-[var(--secondary-grey)]', content: 'bg-[var(--secondary-grey)] ring-0 w-80', overlay: 'bg-[var(--ui-overlay)]', header: 'border-[var(--text-color)]', close: 'hover:bg-(--ui-hover)'}">
+                    <UButton v-if="member.email !== boardOwnerEmail" icon="i-lucide-x" size="xs" color="error" variant="ghost" @click="askRemoveMember(member.email)"/>
                     <template #body>
                       <div class="flex justify-center gap-2">
-                      <UButton color="error" @click="confirmRemoveMember"> Remove </UButton>
+                        <UButton color="error" @click="confirmRemoveMember"> Remove </UButton>
+                      </div>
+                    </template>
+                  </UModal>
+                </div>
+                <div v-else-if="admins.some(a => a.email === auth.user.email)">
+                  <UModal v-model="confirmOpen" title="Remove member" description="Are you sure you want to remove this member from the board?" :ui="{ body: 'bg-[var(--secondary-grey)]', content: 'bg-[var(--secondary-grey)] ring-0 w-80', overlay: 'bg-[var(--ui-overlay)]', header: 'border-[var(--text-color)]', close: 'hover:bg-(--ui-hover)'}">
+                    <div v-if="member.email === boardOwnerEmail"/>
+                    <div v-else-if="admins.find(a => a.email === member.email)">
+                      <UTooltip text="You do not have permission to remove users" :ui="{ content: 'bg-(--secondary-grey) text-color-(--fixed-text-color)' }">
+                        <UButton disabled icon="i-lucide-x" size="xs" color="error" variant="ghost" @click="askRemoveMember(member.email)"/>
+                      </UTooltip>
                     </div>
-                  </template>
-                </UModal>
+                    <div v-else>
+                        <UButton icon="i-lucide-x" size="xs" color="error" variant="ghost" @click="askRemoveMember(member.email)"/>
+                    </div>
+                      <template #body>
+                      <div class="flex justify-center gap-2">
+                        <UButton color="error" @click="confirmRemoveMember"> Remove </UButton>
+                      </div>
+                    </template>
+                  </UModal>
+                </div>
+                <div v-else>
+                  <UModal v-model="confirmOpen" title="Remove member" description="Are you sure you want to remove this member from the board?" :ui="{ body: 'bg-[var(--secondary-grey)]', content: 'bg-[var(--secondary-grey)] ring-0 w-80', overlay: 'bg-[var(--ui-overlay)]', header: 'border-[var(--text-color)]', close: 'hover:bg-(--ui-hover)'}">
+                    <UTooltip text="You do not have permission to remove users" :ui="{ content: 'bg-(--secondary-grey) text-color-(--fixed-text-color)' }">
+                      <UButton disabled v-if="member.email !== boardOwnerEmail" icon="i-lucide-x" size="xs" color="error" variant="ghost" @click="askRemoveMember(member.email)"/>
+                    </UTooltip>
+                    <template #body>
+                      <div class="flex justify-center gap-2">
+                        <UButton color="error" @click="confirmRemoveMember"> Remove </UButton>
+                      </div>
+                    </template>
+                  </UModal>
+                </div>
               </div>
             </div>
           </template>
