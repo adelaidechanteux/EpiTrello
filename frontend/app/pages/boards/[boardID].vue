@@ -247,14 +247,6 @@ async function invite() {
     })
   } finally {
     inviteLoading.value = false
-    toast.add({
-      title: 'Info',
-      description: 'User invited successfully.',
-      color: 'error',
-      ui: {
-        root: 'bg-[var(--secondary-grey)]',
-      },
-    })
     getBoardData()
   }
 }
@@ -272,6 +264,14 @@ async function confirmRemoveMember() {
     members.value = members.value.filter(
       m => m.email !== memberToRemove.value
     )
+    toast.add({
+      title: 'Info',
+      description: 'User removed successfully.',
+      color: 'info',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
   } catch (err) {
     console.error(err)
     toast.add({
@@ -285,14 +285,6 @@ async function confirmRemoveMember() {
   } finally {
     confirmOpen.value = false
     memberToRemove.value = null
-    toast.add({
-      title: 'Info',
-      description: 'User removed successfully.',
-      color: 'error',
-      ui: {
-        root: 'bg-[var(--secondary-grey)]',
-      },
-    })
   }
 }
 
