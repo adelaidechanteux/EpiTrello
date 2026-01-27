@@ -153,7 +153,8 @@ const boardID = computed(() => {
 
 const { $bridge } = useNuxtApp()
 const api = $bridge
-const ws = useBoardSocket(boardID.value!)
+const requestUrl = useRequestURL()
+const ws = useBoardSocket(boardID.value!, `${requestUrl.hostname}:${requestUrl.port}`)
 const auth = useAuthStore()
 
 const board = ref<Column[]>([])
