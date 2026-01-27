@@ -1,21 +1,16 @@
 from uuid import UUID
-from ninja import Router, Schema
 from django.http import HttpRequest
 from collections import OrderedDict
+from ninja import Router
 
 from myboard.models import Board, Task, TITLE_LENGTH, CATEGORY_LENGTH, COLOR_LENGTH
 from myboard.utils import send_websocket
+from myboard.schemas import *
 from myauth.models import User
 from myauth.api import AUTH_CHECKS
 
 
 router = Router(auth=AUTH_CHECKS, tags=["board"])
-
-
-class OUTError(Schema):
-    code: str
-    message: str
-
 
 OUTERROR_BoardDoesNotExists = (404, {"code": "BoardDoesNotExists", "message": "Board does not exists"})
 OUTERROR_TaskDoesNotExists = (404, {"code": "TaskDoesNotExists", "message": "Task does not exists"})
@@ -23,60 +18,6 @@ OUTERROR_UserDoesNotExists = (404, {"code": "UserDoesNotExists", "message": "Use
 OUTERROR_MissingPermission = (403, {"code": "MissingPermission", "message": "Connected User has not enough permissions"})
 OUTERROR_BadValue = (400, {"code": "BadValue", "message": "Value in a body value item does not meet requirements"})
 OUTERROR_TaskIsInvalid = (400, {"code": "TaskIsInvalid", "message": "Task is not in the good state to be processed by this call"})
-
-
-
-
-class OUTMemberSchema(Schema):
-    id: UUID
-    username: str
-    email: str
-    profile_picture: str
-
-
-class OUTTaskSchema(Schema):
-    id: UUID
-    title: str
-    description: str
-    color: str
-    category: str
-    date_start: str | None
-    date_end: str | None
-    date_creation: str
-    owner: OUTMemberSchema
-    assigned: OUTMemberSchema | None
-    completed: bool
-
-    @staticmethod
-    def resolve_date_start(obj: Task):
-        if obj.date_start:
-            return f"{obj.date_start}"
-        return
-    @staticmethod
-    def resolve_date_end(obj: Task):
-        if obj.date_end:
-            return f"{obj.date_end}"
-        return
-    @staticmethod
-    def resolve_date_creation(obj: Task):
-        return f"{obj.date_creation}"
-
-
-class OUTBoardSchema(Schema):
-    title: str
-    id: UUID
-    favorite: bool = False
-    members: list[OUTMemberSchema]
-    tasks: list[OUTTaskSchema]
-    archived: list[OUTTaskSchema]
-    owner: OUTMemberSchema
-    categories: list[str]
-    admin: list[OUTMemberSchema]
-    color: str
-
-
-class OUTOKSchema(Schema):
-    ok: bool = True
 
 
 @router.get("/get/board/{board_id}/", response={200: OUTBoardSchema, 403: OUTError, 404: OUTError})
@@ -94,17 +35,6 @@ def get_board(request: HttpRequest, board_id: UUID):
     return board
 
 
-class OUTBoardMinSchema(Schema):
-    id: UUID
-    title: str
-    color: str
-
-
-class OUTBoardsMinSchema(Schema):
-    boards: list[OUTBoardMinSchema]
-    owned: list[OUTBoardMinSchema]
-    favorite: list[OUTBoardMinSchema]
-    admin: list[OUTBoardMinSchema]
 
 
 @router.get("/boards/", response={200: OUTBoardsMinSchema})
@@ -119,11 +49,6 @@ def board_member(request: HttpRequest):
         "admin": user.board_admin_set.all().distinct(),
         "favorite": user.board_favorite_set.all().distinct(),
     }
-
-
-class InInvitBoardSchema(Schema):
-    email: str
-    admin: bool
 
 
 @router.post("/invit/board/{board_id}/", response={200: OUTOKSchema, 403: OUTError, 404: OUTError})
@@ -151,9 +76,6 @@ def invit_board(request: HttpRequest, board_id: UUID, body: InInvitBoardSchema):
     })
     return {}
 
-class InCreateBoardSchema(Schema):
-    title: str
-    color: str
 
 @router.post("/create/board/", response={200: OUTBoardSchema, 400: OUTError, 404: OUTError})
 def create_board(request: HttpRequest, body: InCreateBoardSchema):
@@ -187,14 +109,6 @@ def delete_board(request: HttpRequest, board_id: UUID):
     return {}
 
 
-class InCreateTask(Schema):
-    title: str
-    description: str | None = None
-    category: str
-    color: str | None = None
-    date_start: str | None = None
-    date_end: str | None = None
-    assigned: str | None = None
 
 @router.post("create/task/{board_id}/", response={200: OUTTaskSchema, 400: OUTError, 403: OUTError,  404: OUTError})
 def create_task(request: HttpRequest, board_id: UUID, body: InCreateTask):
@@ -329,17 +243,6 @@ def restore_task(request: HttpRequest, board_id: UUID, task_id: UUID):
     return {}
 
 
-class InUpdateTask(Schema):
-    title: str | None = None
-    description: str | None = None
-    color: str | None = None
-    category: str | None = None
-    date_start: str | None = None
-    date_end: str | None = None
-    owner: str | None = None
-    assigned: str | None = None
-    completed: bool | None = None
-    order: int | None = None
 
 
 @router.put("/update/task/{board_id}/{task_id}/", response={200: OUTTaskSchema, 403: OUTError, 404: OUTError})
@@ -398,10 +301,6 @@ def update_task(request: HttpRequest, board_id: UUID, task_id: UUID, body: InUpd
     return task
 
 
-class InUpdateBoard(Schema):
-    title: str | None = None
-    owner: str | None = None
-    color: str | None = None
 
 
 @router.put("/update/board/{board_id}/", response={200: OUTBoardSchema, 400: OUTError, 403: OUTError, 404: OUTError})
@@ -445,8 +344,6 @@ def update_board(request: HttpRequest, board_id: UUID, body: InUpdateBoard):
     return board
 
 
-class InDeleteMember(Schema):
-    email: str
 
 
 @router.put("/delete/member/{board_id}/", response={200: OUTBoardSchema, 400: OUTError, 403: OUTError, 404: OUTError})
@@ -486,8 +383,6 @@ def delete_member(request: HttpRequest, board_id: UUID, body: InDeleteMember):
     return board
 
 
-class InUpdateCategory(Schema):
-    categories: list[str]
 
 
 @router.put("/update/categories/{board_id}/", response={200: OUTBoardSchema, 400: OUTError, 403: OUTError, 404: OUTError})
@@ -513,9 +408,6 @@ def update_categories(request: HttpRequest, board_id: UUID, body: InUpdateCatego
     return board
 
 
-class InUpdateRole(Schema):
-    email: str
-    admin: bool
 
 
 @router.put("/update/role/{board_id}/", response={200: OUTOKSchema, 403: OUTError, 404: OUTError})
@@ -546,8 +438,6 @@ def update_role(request: HttpRequest, board_id: UUID, body: InUpdateRole):
     })
     return {}
 
-class InUpdateFavorite(Schema):
-    favorite: bool
 
 
 @router.put("/update/favorite/{board_id}/", response={200: OUTOKSchema, 403: OUTError, 404: OUTError})
