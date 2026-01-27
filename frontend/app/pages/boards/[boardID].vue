@@ -109,7 +109,7 @@
       </div>
     </div>
     <ClientOnly>
-      <Board v-if="board" v-model:board="board" @updated="getBoardData"/>
+      <Board v-if="board" v-model:board="board" v-model:members="members" @updated="getBoardData"/>
     </ClientOnly>
   </div>
   <TaskModal v-if="selectedTask" :open="taskModalOpen" :task="selectedTask" :boardID="boardID!" :categories="board.map(c => c.id)" @close="taskModalOpen = false" :archived="true" @updated="getBoardData"/>
@@ -289,7 +289,6 @@ async function restoreTask(task: Task) {
     const categoryExists = board.value.some(c => c.id === task.category)
     if (!categoryExists) {
       const nextCategories = [...board.value.map(c => c.id), task.category]
-      console.log(task.category, nextCategories)
 
       await api.updateCategories(boardID.value, {
         categories: nextCategories

@@ -56,6 +56,7 @@ const form = reactive({
   ...props.task,
   date_start: toDateInput(props.task.date_start),
   date_end: toDateInput(props.task.date_end),
+  assigned: typeof props.task.assigned === 'string' ? props.task.assigned : props.task.assigned?.email ?? ''
 })
 
 watch(
@@ -65,12 +66,12 @@ watch(
       ...t,
       date_start: toDateInput(t.date_start),
       date_end: toDateInput(t.date_end),
+      assigned: typeof t.assigned === 'string' ? t.assigned : t.assigned?.email ?? ''
     })
   }
 )
 
 function close() {
-    console.log(props.categories)
   emit('close')
 }
 

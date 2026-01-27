@@ -31,8 +31,8 @@
                         <UIcon v-if="element.description" name="i-lucide-align-left" class="w-4 h-4 opacity-50 hover:opacity-100 transition-opacity" />
                       </UTooltip>
                       <UAvatarGroup v-if="assignedUsers(element).length" size="sm" max="3" class="ml-auto flex items-center -space-x-2">
-                        <UTooltip v-for="user in assignedUsers(element)" :key="user.id" :text="user.username" :ui="{ content: 'bg-(--secondary-grey) text-(--fixed-text-color)' }">
-                          <UAvatar :src="user.profile_picture" :alt="user.username" class="w-6 h-6 rounded-full object-cover shadow-sm transition-transform"/>
+                        <UTooltip v-for="(user) in assignedUsers(element)" :key="user.id" :text="user.username" :ui="{ content: 'bg-(--secondary-grey) text-(--fixed-text-color)' }">
+                          <UAvatar :src="user.profile_picture" :key="user.id" :alt="user.username" class="w-6 h-6 rounded-full object-cover shadow-sm transition-transform"/>
                         </UTooltip>
                       </UAvatarGroup>
                     </div>
@@ -90,11 +90,12 @@
 
 <script setup lang="ts">
 import Draggable from 'vuedraggable';
-import type { Task, Column } from '~/composables/types/board';
+import type { Task, Column, User } from '~/composables/types/board';
 import { useRoute } from 'vue-router';
 
 const props = defineProps<{
   board: Column[]
+  members: User[]
 }>()
 
 const { $bridge } = useNuxtApp()
@@ -169,7 +170,6 @@ async function addCard(column: Column) {
 }
 
 function cancelAddCard(column: Column) {
-  console.log(props.board)
   addingCard.value[column.id] = false
   newCardTitles.value[column.id] = ''
 }
@@ -336,8 +336,25 @@ function dateColorClass(task: Task) {
   return ''
 }
 
-function assignedUsers(task: any) {
-  if (!task.assigned) return []
-  return Array.isArray(task.assigned) ? task.assigned : [task.assigned]
-}
+const assignedUsers = computed(() => {
+  return (task: Task) => {
+    if (!task.assigned) return []
+    const assignments = Array.isArray(task.assigned) ? task.assigned : [task.assigned]
+    return assignments
+      .map(assignee => {
+        if (typeof assignee === 'object' && assignee.email) {
+          return assignee
+        }
+        if (typeof assignee === 'string') {
+          return props.members.find(m => m.email === assignee)
+        }
+        return null
+      })
+      .filter(Boolean)
+      .map(user => ({
+        ...user,
+        profile_picture: props.members.find(m => m.id === user?.id)?.profile_picture || user?.profile_picture
+      }))
+  }
+})
 </script>
