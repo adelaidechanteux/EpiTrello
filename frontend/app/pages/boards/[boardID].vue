@@ -475,6 +475,9 @@ async function toggleCompleted(task: Task) {
 
 ws.onMessage((event) => {
   console.log('[WS EVENT]', event.type)
+  if (event.from_user === auth.user.id) {
+    return
+  }
 
   switch (event.type) {
 

@@ -57,6 +57,7 @@ In case of failure
 ```json
 {
     "type": "f_invit_board", # const
+    "event_from_uuid": "",
     "admin": true,
     "user": {
         "id": "",
@@ -72,6 +73,7 @@ In case of failure
 ```json
 {
     "type": "f_delete_member", # const
+    "event_from_uuid": "",
     "id": ""
 }
 ```
@@ -81,6 +83,7 @@ In case of failure
 ```json
 {
     "type": "f_update_board", # const
+    "event_from_uuid": "",
     "board_title": "",
     "board_owner": {
         "id": "",
@@ -97,6 +100,7 @@ In case of failure
 ```json
 {
     "type": "f_update_categories", # const
+    "event_from_uuid": "",
     "categories": ["", ""]
 }
 ```
@@ -106,6 +110,7 @@ In case of failure
 ```json
 {
     "type": "f_create_task", # const
+    "event_from_uuid": "",
     "task": {
         "id": "",
         "title": "",
@@ -128,6 +133,7 @@ In case of failure
 ```json
 {
     "type": "f_delete_task", # const
+    "event_from_uuid": "",
     "id": ""
 }
 ```
@@ -137,6 +143,7 @@ In case of failure
 ```json
 {
     "type": "f_deleteforce_task", # const
+    "event_from_uuid": "",
     "id": ""
 }
 ```
@@ -146,6 +153,7 @@ In case of failure
 ```json
 {
     "type": "f_update_task", # const
+    "event_from_uuid": "",
     "task": {
         "id": "",
         "title": "",
@@ -168,6 +176,7 @@ In case of failure
 ```json
 {
     "type": "", # const
+    "event_from_uuid": "",
     "task": {
         "id": "",
         "title": "",
@@ -190,6 +199,7 @@ In case of failure
 ```json
 {
     "type": "f_update_role", # const
+    "event_from_uuid": "",
     "user": {
         "id": "",
         "username": "",
@@ -205,6 +215,7 @@ In case of failure
 ```json
 {
     "type": "f_connected_user", # const
+    "event_from_uuid": "",
     "user": {
         "id": "",
         "username": "",
@@ -219,6 +230,7 @@ In case of failure
 ```json
 {
     "type": "f_disconnected_user", # const
+    "event_from_uuid": "",
     "user": {
         "id": "",
         "username": "",
