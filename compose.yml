@@ -1,8 +1,17 @@
 services:
-  web:
+  backend_proxy:
+    build:
+      context: "backend/"
+      dockerfile: "Dockerfile.nginx"
+    ports:
+      - "5080:80"
+    depends_on:
+      - "backend"
+      - "frontend"
+  frontend:
     build: frontend/
     ports:
-      - 3000:3000
+      - "3000:3000"
   backend:
     build: "backend/"
     ports:
@@ -35,14 +44,6 @@ services:
   #     - "valkey"
   #   command: "bash /home/nonroot/entrypoint_test.sh"
   #   restart: "no"
-  backend_proxy:
-    build:
-      context: "backend/"
-      dockerfile: "Dockerfile.nginx"
-    ports:
-      - "5080:80"
-    depends_on:
-      - "backend"
   database:
     image: "docker.io/postgres:18-trixie"
     ports:

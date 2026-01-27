@@ -1,3 +1,4 @@
 backend/.venv/*
 frontend/node_modules/*
+environment/override.env
 .git/*
