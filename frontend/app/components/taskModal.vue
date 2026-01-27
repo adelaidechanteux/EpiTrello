@@ -51,6 +51,7 @@ const emit = defineEmits<{
 
 const { $bridge } = useNuxtApp()
 const api = $bridge
+const toast = useToast()
 
 const form = reactive({
   ...props.task,
@@ -101,6 +102,14 @@ async function save() {
     close()
   } catch (err) {
     console.error(err)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to update task.',
+      color: 'error',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
   }
 }
 
@@ -111,6 +120,14 @@ async function archive() {
     close()
   } catch (err) {
     console.error(err)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to archive task.',
+      color: 'error',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
   }
 }
 
@@ -131,6 +148,14 @@ async function restoreTask() {
     close()
   } catch (err) {
     console.error(err)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to restore task.',
+      color: 'error',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
   }
 }
 

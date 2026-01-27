@@ -237,8 +237,24 @@ async function invite() {
     shareOpen.value = false
   } catch (err) {
     console.error(err)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to invite user.',
+      color: 'error',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
   } finally {
     inviteLoading.value = false
+    toast.add({
+      title: 'Info',
+      description: 'User invited successfully.',
+      color: 'error',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
     getBoardData()
   }
 }
@@ -258,9 +274,25 @@ async function confirmRemoveMember() {
     )
   } catch (err) {
     console.error(err)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to remove user.',
+      color: 'error',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
   } finally {
     confirmOpen.value = false
     memberToRemove.value = null
+    toast.add({
+      title: 'Info',
+      description: 'User removed successfully.',
+      color: 'error',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
   }
 }
 
@@ -299,6 +331,14 @@ async function updateBoardColor() {
     boardColor.value = color.value
   } catch (err) {
     console.error(err)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to change board color.',
+      color: 'error',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
   }
 }
 
@@ -330,6 +370,14 @@ async function restoreTask(task: Task) {
     await getBoardData()
   } catch (err) {
     console.error(err)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to restore task.',
+      color: 'error',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
   }
 }
 
@@ -346,6 +394,14 @@ async function updateBoardName() {
     boardName.value = NewBoardName.value
   } catch (err) {
     console.error(err)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to rename board.',
+      color: 'error',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
   }
 }
 
@@ -358,6 +414,14 @@ async function deleteTask(task: Task) {
     archivedTasks.value = archivedTasks.value.filter(t => t.id !== task.id)
   } catch (err) {
     console.error(err)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to delete archive.',
+      color: 'error',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
   }
 }
 

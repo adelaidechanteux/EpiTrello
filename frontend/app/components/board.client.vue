@@ -213,6 +213,14 @@ async function onColumnReorder() {
     })
   } catch (err) {
     console.error(err)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to move column.',
+      color: 'error',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
   }
 }
 
@@ -233,6 +241,14 @@ async function onTaskReorder() {
     await Promise.all(updates)
   } catch (err) {
     console.error(err)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to move task.',
+      color: 'error',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
   }
 }
 
@@ -271,6 +287,14 @@ async function deleteColumn(columnId: string) {
     board.value = updatedColumns
   } catch (err) {
     console.error('Failed to delete column', err)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to delete column.',
+      color: 'error',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
   }
 }
 
