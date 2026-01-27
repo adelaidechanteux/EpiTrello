@@ -44,6 +44,7 @@ class Task(models.Model):
         null=True,
     )
     completed = models.BooleanField(default=False)
+    one_day_email_send = models.BooleanField(default=False)
 
 
 

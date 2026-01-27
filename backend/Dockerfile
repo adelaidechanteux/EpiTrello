@@ -19,6 +19,8 @@ RUN groupadd --system --gid 999 nonroot \
 
 COPY --from=builder --chown=nonroot:nonroot /app /app
 COPY --chown=nonroot:nonroot ./epitrello/trellobackend/.pg_service.conf /home/nonroot/
+COPY --chown=nonroot:nonroot ./entrypoint.sh /home/nonroot/entrypoint.sh
+COPY --chown=nonroot:nonroot ./entrypoint_test.sh /home/nonroot/entrypoint_test.sh
 
 ENV PATH="/app/.venv/bin:$PATH"
 
@@ -28,4 +30,4 @@ WORKDIR /app
 
 EXPOSE 5081
 
-CMD ["sh", "-c", "./manage.py migrate && exec daphne -b 0.0.0.0 -p 5081 trellobackend.asgi:application"]
+CMD ["bash", "/home/nonroot/entrypoint.sh"]

@@ -1,11 +1,18 @@
 import sys
 from uuid import UUID
 from channels.layers import get_channel_layer
+from django.conf import settings
 from asgiref.sync import async_to_sync
+from django.core.mail import send_mail
+
 
 from myboard.models import Board, UserConnected
 from myboard.schemas import OUTMemberSchema
 from myauth.models import User
+
+
+def send_email(title: str, body: str, to: list[str]):
+    _ = send_mail(title, body, settings.EMAIL_SENDER, to)
 
 
 def does_user_access_board(u: User, board_id: UUID):
