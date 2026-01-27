@@ -21,7 +21,7 @@
                             <UInput v-model="state.name" maxlength="49" class="w-full" size="md" color="secondary" :ui="{base: 'bg-[var(--secondary-grey)] rounded-sm'}"/>
                         </UFormField>
                         <UPopover>
-                            <UButton label="Choose color" color="neutral" variant="outline" :ui="{base: 'bg-[var(--secondary-grey)] rounded-sm'}">
+                            <UButton label="Choose color" color="neutral" variant="outline" :ui="{base: 'bg-[var(--secondary-grey)] rounded-sm hover:bg-(--ui-hover)'}">
                                 <template #leading>
                                     <span :style="chip" class="size-3 rounded-full" />
                                 </template>
@@ -38,8 +38,8 @@
             </UPopover>
         </div>
         <ClientOnly>
-            <UDropdownMenu :items="profile" :ui="{content: 'bg-[var(--secondary-grey)] rounded-sm'}">
-                <UButton :avatar="{src: auth.user.profile_picture, size: 'xs'}" color="secondary" variant="ghost" size="md" :ui="{ base: 'p-1 rounded-sm'}"/>
+            <UDropdownMenu :items="profile" :ui="{content: 'bg-[var(--secondary-grey)] rounded-sm', item: 'hover:bg-(--ui-hover)'}">
+                <UButton :avatar="{src: auth.user.profile_picture, size: 'xs'}" color="secondary" variant="ghost" size="md" :ui="{ base: 'p-1 rounded-sm '}"/>
             </UDropdownMenu>
         </ClientOnly>
     </div>
