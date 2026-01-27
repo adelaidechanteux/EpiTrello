@@ -382,7 +382,6 @@ const filteredArchivedTasks = computed(() => {
 ws.onMessage((event) => {
   console.log('[WS EVENT]', event.type)
   if (event.from_user === auth.user.id) {
-    console.log(event.from_user, auth.user.id)
     return
   }
 
@@ -395,7 +394,6 @@ ws.onMessage((event) => {
       break
 
     case 'f_update_categories':
-      console.log(event)
       board.value = event.categories.map((cat: string) => ({
         id: cat,
         title: cat,
