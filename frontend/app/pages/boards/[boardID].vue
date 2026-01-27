@@ -95,8 +95,33 @@
                 No archived tasks found
               </div>
               <div v-for="task in filteredArchivedTasks" :key="task.id">
-                <div class="bg-[var(--secondary-grey)] rounded-lg p-2 text-sm shadow cursor-pointer hover:bg-[var(--ui-hover)]" @click="openArchivedTask(task)">
-                  {{ task.title }}
+                <div class="group relative bg-(--secondary-grey) rounded-lg p-2 text-sm shadow cursor-pointer border-2 border-(--secondary-grey) hover:border-info flex items-center gap-2 overflow-hidden" @click="openArchivedTask(task)">
+                  <UIcon name="i-lucide-square-pen" class="absolute top-1 right-1 opacity-0 group-hover:opacity-100"/>
+                  <span class="flex-1 flex flex-col transition-all">
+                    <div class="mt-1 flex items-center gap-2">
+                      <UTooltip :text="task.completed ? 'Mark Uncomplete' : 'Mark Complete'" :ui="{ content: 'bg-(--secondary-grey) text-color-(--fixed-text-color)' }">
+                        <UButton :color="task.completed ? 'success' : 'secondary'" variant="soft" :icon="task.completed ? 'i-lucide-circle-check' : ''"
+                        class="transition-all duration-500 ease-out cursor-pointer rounded-full w-5 h-5 p-0 -ml-6 opacity-0 translate-x-[-6px] group-hover:ml-0 group-hover:opacity-100 group-hover:translate-x-0"
+                        :class="task.completed ? 'ml-0 opacity-100 translate-x-0' : 'border-2 border-(--fixed-text-color)'" @click.stop="toggleCompleted(task)"/>
+                      </UTooltip>
+                      <span>
+                        {{ task.title }}
+                      </span>
+                    </div>
+                    <div class="mt-1 flex items-center gap-2 w-full">
+                      <span v-if="task.date_end" class="inline-block text-xs mt-1 p-2 py-0.5 w-14 rounded-md transition-colors" :class="dateColorClass(task)">
+                        {{ formatDate(task.date_end) }}
+                      </span>
+                        <UTooltip text="This task has a description" :ui="{ content: 'bg-(--secondary-grey) text-color-(--fixed-text-color)' }">
+                          <UIcon v-if="task.description" name="i-lucide-align-left" class="w-4 h-4 opacity-50 hover:opacity-100 transition-opacity" />
+                        </UTooltip>
+                        <UAvatarGroup v-if="assignedUsers(task).length" size="sm" max="3" class="ml-auto flex items-center -space-x-2">
+                          <UTooltip v-for="(user) in assignedUsers(task)" :key="user.id" :text="user.username" :ui="{ content: 'bg-(--secondary-grey) text-(--fixed-text-color)' }">
+                            <UAvatar :src="user.profile_picture" :key="user.id" :alt="user.username" class="w-6 h-6 rounded-full object-cover shadow-sm transition-transform"/>
+                          </UTooltip>
+                        </UAvatarGroup>
+                      </div>
+                  </span>
                 </div>
                 <div class="flex gap-0 mt-1">
                   <UButton size="xs" color="info" variant="ghost" @click.stop="restoreTask(task)">Restore</UButton>
@@ -377,6 +402,76 @@ const filteredArchivedTasks = computed(() => {
     task.title.toLowerCase().includes(q)
   )
 })
+
+function formatDate(date: string) {
+  return new Date(date).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+function isOverdue(date: string) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const due = new Date(date)
+  due.setHours(0, 0, 0, 0)
+
+  return due <= today
+}
+
+function isDueSoon(date: string) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const due = new Date(date)
+  due.setHours(0, 0, 0, 0)
+
+  const diffDays = (due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+
+  return diffDays >= 0 && diffDays < 3
+}
+
+function dateColorClass(task: Task) {
+  if (task.completed) {
+    return 'bg-green-500/20 text-green-700 dark:text-green-400'
+  }
+  if (task.date_end && isOverdue(task.date_end)) {
+    return 'bg-red-500/20 text-red-700 dark:text-red-400'
+  }
+  if (task.date_end && isDueSoon(task.date_end)) {
+    return 'bg-orange-500/20 text-orange-700 dark:text-orange-400'
+  }
+  return ''
+}
+
+function assignedUsers(task: Task) {
+  if (!task.assigned) return []
+  if (typeof task.assigned === 'object' && task.assigned.email) return [task.assigned]
+
+  return members.value.filter(u => u.email === task.assigned)
+}
+
+async function toggleCompleted(task: Task) {
+  if (!boardID.value) return
+  const previous = task.completed
+  task.completed = !task.completed
+
+  try {
+    await api.updateTask(boardID.value, task.id, {
+      completed: task.completed,
+    })
+  } catch (err) {
+    console.error('Failed to update task', err)
+    task.completed = previous
+    toast.add({
+      title: 'Error',
+      description: 'Failed to update task status.',
+      color: 'error',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
+  }
+}
 
 ws.onMessage((event) => {
   console.log('[WS EVENT]', event.type)
