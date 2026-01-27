@@ -381,9 +381,8 @@ const filteredArchivedTasks = computed(() => {
 
 ws.onMessage((event) => {
   console.log('[WS EVENT]', event.type)
-  console.log(event.event_from_uuid)
-  if (event.event_from_uuid === auth.user.id) {
-    console.log(event.event_from_uuid, auth.user.id)
+  if (event.from_user === auth.user.id) {
+    console.log(event.from_user, auth.user.id)
     return
   }
 

@@ -68,6 +68,7 @@ class BoardRealTime(WebsocketConsumer):
             "type": "f_invit_board",
             "admin": event["admin"],
             "user": event["user"],
+            "from_user": event["from_user"],
         }))
 
     def f_delete_member(self, event: dict):
@@ -76,6 +77,7 @@ class BoardRealTime(WebsocketConsumer):
         self.send(text_data=json.dumps({
             "type": "f_delete_member",
             "id": event["id"],
+            "from_user": event["from_user"],
         }))
 
     def f_delete_board(self, event: dict):
@@ -84,6 +86,7 @@ class BoardRealTime(WebsocketConsumer):
         self.send(text_data=json.dumps({
             "type": "f_delete_board",
             "id": event["id"],
+            "from_user": event["from_user"],
         }))
 
     def f_update_board(self, event: dict):
@@ -94,6 +97,7 @@ class BoardRealTime(WebsocketConsumer):
             "board_title": event["board_title"],
             "board_owner": event["board_owner"],
             "board_color": event["board_color"],
+            "from_user": event["from_user"],
         }))
 
     def f_update_categories(self, event: dict):
@@ -102,6 +106,7 @@ class BoardRealTime(WebsocketConsumer):
         self.send(text_data=json.dumps({
             "type": "f_update_categories",
             "categories": event["categories"],
+            "from_user": event["from_user"],
         }))
 
     def f_create_task(self, event: dict):
@@ -111,6 +116,7 @@ class BoardRealTime(WebsocketConsumer):
             "type": "f_create_task",
             "task": event["task"],
             "board_categories": event["board_categories"],
+            "from_user": event["from_user"],
         }))
 
     def f_delete_task(self, event: dict):
@@ -119,6 +125,7 @@ class BoardRealTime(WebsocketConsumer):
         self.send(text_data=json.dumps({
             "type": "f_delete_task",
             "id": event["id"],
+            "from_user": event["from_user"],
         }))
 
     def f_deleteforce_task(self, event: dict):
@@ -127,6 +134,7 @@ class BoardRealTime(WebsocketConsumer):
         self.send(text_data=json.dumps({
             "type": "f_delete_task",
             "id": event["id"],
+            "from_user": event["from_user"],
         }))
 
     def f_update_task(self, event: dict):
@@ -136,6 +144,7 @@ class BoardRealTime(WebsocketConsumer):
             "type": "f_update_task",
             "task": event["task"],
             "board_categories": event["board_categories"],
+            "from_user": event["from_user"],
         }))
 
     def f_restore_task(self, event: dict):
@@ -145,6 +154,7 @@ class BoardRealTime(WebsocketConsumer):
             "type": "f_restore_task",
             "task": event["task"],
             "board_categories": event["board_categories"],
+            "from_user": event["from_user"],
         }))
 
     def f_update_role(self, event: dict):
@@ -154,6 +164,7 @@ class BoardRealTime(WebsocketConsumer):
             "type": "f_update_role",
             "user": event["user"],
             "admin": event["admin"],
+            "from_user": event["from_user"],
         }))
 
     def f_connected_user(self, event: dict):
@@ -162,6 +173,7 @@ class BoardRealTime(WebsocketConsumer):
         self.send(text_data=json.dumps({
             "type": "f_connected_user",
             "user": event["user"],
+            "from_user": event["from_user"],
         }))
 
     def f_disconnected_user(self, event: dict):
@@ -170,4 +182,5 @@ class BoardRealTime(WebsocketConsumer):
         self.send(text_data=json.dumps({
             "type": "f_disconnected_user",
             "user": event["user"],
+            "from_user": event["from_user"],
         }))

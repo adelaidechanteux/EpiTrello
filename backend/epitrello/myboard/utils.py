@@ -99,6 +99,6 @@ def send_websocket(board_id: str, type_: str, user: UUID, data: dict):
         raise ValueError("Channel Layer not set up")
     async_to_sync(channel_layer.group_send)(f"board_{board_id}", {
         "type": type_,
-        "event_from_uuid": f"{user}",
+        "from_user": f"{user}",
         **serialize_data_dict(data),
     })
