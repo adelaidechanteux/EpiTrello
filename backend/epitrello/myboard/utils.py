@@ -28,7 +28,7 @@ def connect_user_board(u: User, board_id: UUID):
         c = UserConnected(user=u, nb_connected=1)
         c.save()
         b.user_connected.add(c)
-        send_websocket(f"{board_id}", "f_connected_user", {
+        send_websocket(f"{board_id}", "f_connected_user", u.id, {
             "user": OUTMemberSchema.from_orm(u).dict(),
         })
         return [f"{x.user.email}" for x in b.user_connected.all()]
@@ -51,7 +51,7 @@ def disconnect_user_board(uid: UUID, board_id: UUID):
         return False
     c.nb_connected = c.nb_connected - 1
     if c.nb_connected == 0:
-        send_websocket(f"{board_id}", "f_disconnected_user", {
+        send_websocket(f"{board_id}", "f_disconnected_user", uid, {
             "user": OUTMemberSchema.from_orm(u).dict(),
         })
         b.user_connected.remove(c)
@@ -93,11 +93,12 @@ def serialize_data_dict(d: dict) -> dict:
     return res
 
 
-def send_websocket(board_id: str, type_: str, data: dict):
+def send_websocket(board_id: str, type_: str, user: UUID, data: dict):
     channel_layer = get_channel_layer()
     if channel_layer is None:
         raise ValueError("Channel Layer not set up")
     async_to_sync(channel_layer.group_send)(f"board_{board_id}", {
         "type": type_,
+        "event_from_uuid": f"{user}",
         **serialize_data_dict(data),
     })

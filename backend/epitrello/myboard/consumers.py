@@ -5,7 +5,7 @@ from uuid import UUID
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from myauth.api import auth_websocket
-from myboard.utils import does_user_access_board, connect_user_board, disconnect_user_board, send_websocket
+from myboard.utils import does_user_access_board, connect_user_board, disconnect_user_board
 from django.http import HttpResponseForbidden
 
 class BoardRealTime(WebsocketConsumer):
