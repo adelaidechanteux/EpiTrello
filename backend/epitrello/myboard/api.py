@@ -4,7 +4,7 @@ from collections import OrderedDict
 from ninja import Router
 
 from myboard.models import Board, Task, TITLE_LENGTH, CATEGORY_LENGTH, COLOR_LENGTH
-from myboard.utils import send_websocket
+from myboard.utils import send_email, send_websocket
 from myboard.schemas import *
 from myauth.models import User
 from myauth.api import AUTH_CHECKS
@@ -91,6 +91,10 @@ def create_board(request: HttpRequest, body: InCreateBoardSchema):
     board.save()
     board.members.add(user)
     board.admin.add(user)
+    user.nb_board += 1
+    user.save(update_fields=["nb_board"])
+    if user.nb_board == 1:
+        send_email("EpiTrello | Congrats on your First Board Created", f"Well done on creating your first board {user.username}!", to=[f"{user.email}"])
     return board
 
 
@@ -156,6 +160,10 @@ def create_task(request: HttpRequest, board_id: UUID, body: InCreateTask):
         "task": OUTTaskSchema.from_orm(task).dict(),
         "board_categories": new_category,
     })
+    user.nb_task += 1
+    user.save(update_fields=["nb_task"])
+    if user.nb_task == 1:
+        send_email("EpiTrello | Congrats on your First Task Created", f"Well done on creating your first task {user.username}!", to=[f"{user.email}"])
     return task
 
 

@@ -19,3 +19,5 @@ class User(models.Model):
     email = models.EmailField()
     authprovider = models.CharField(max_length=3, choices=AUTH_PROVIDERS)
     authuserid = models.CharField(max_length=30)
+    nb_board = models.IntegerField(default=0)
+    nb_task = models.IntegerField(default=0)
