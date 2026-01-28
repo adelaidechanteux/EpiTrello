@@ -4,10 +4,10 @@
             <img src="~/assets/images/trello_logo.png" class="logo-button" alt="trello logo"/>
         </UButton>
         <div class="middle">
-            <UInputMenu v-model="value" :items="items" class="search-bar" color="info" placeholder="Search" icon="i-lucide-search"
+            <UInputMenu v-model="value" :items="boards" by="label" class="search-bar" color="info" placeholder="Search boards..." icon="i-lucide-search"
             open-on-focus highlightOnHover size="md" :ui="{ base: 'bg-[var(--secondary-grey)] rounded-sm', item: [ `bg-[var(--secondary-grey)] hover:bg-[var(--ui-secondary)]/20
             active:bg-[var(--ui-secondary)]/10 focus:bg-[var(--ui-secondary)] focus:ring-0 `],
-            group: 'p-0', empty:'bg-[var(--secondary-grey)]'}"/>
+            group: 'p-0', empty:'bg-[var(--secondary-grey)]'}" empty="No boards found" @update:model-value="onBoardSelect"/>
             <UPopover :content="{ align: 'start', side: 'bottom', sideOffset: 8 }" :ui="{content: 'bg-[var(--secondary-grey)]'}">
                 <UButton color="info" size="md" :ui="{ base: 'rounded-sm' }">
                 Create
@@ -55,8 +55,14 @@ const auth = useAuthStore();
 const router = useRouter();
 const toast = useToast()
 
-const items = ref(['Backlog', 'Todo', 'In Progress', 'Done'])
-const value = ref('')
+type BoardItem = {
+  label: string
+  id: string
+}
+
+const boards = ref<BoardItem[]>([])
+const value = ref<BoardItem | undefined>(undefined)
+
 const profile: DropdownMenuItem[] = [{
     label: 'Log Out',
     onSelect() {
@@ -73,6 +79,20 @@ const color = ref('#1f1f21')
 const chip = computed(() => ({ backgroundColor: color.value }))
 
 type Schema = typeof state
+
+onMounted(async () => {
+  try {
+    api.setjwt(auth.jwt)
+    const data = await api.getBoards()
+    boards.value = data.boards.map((b: any) => ({
+      label: b.title,
+      id: b.id
+    }))
+    console.log(boards)
+  } catch (err) {
+    console.error('Failed to fetch boards', err)
+  }
+})
 
 function validate(state: Partial<Schema>): FormError[] {
     const errors = []
@@ -115,6 +135,14 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         })
     }
 }
+
+function onBoardSelect(board: BoardItem | null) {
+  if (!board) return
+
+  router.push(`/boards/${board.id}`)
+  value.value = undefined
+}
+
 </script>
 
 <style>
