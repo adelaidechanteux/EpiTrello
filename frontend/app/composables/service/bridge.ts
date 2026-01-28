@@ -2,7 +2,7 @@ export class bridge {
     constructor() {
         console.log('Bridge instance created')
     }
-    url: string = "http://127.0.0.1:5080";
+    url: string = "";
     jwt: string = "";
 
     setjwt(new_jwt: string) {
@@ -11,6 +11,14 @@ export class bridge {
 
     getjwt() {
         return this.jwt;
+    }
+
+    seturl(new_url: string) {
+        this.url = new_url;
+    }
+
+    geturl() {
+        return this.url;
     }
 
     async login(credential: string | undefined) {
