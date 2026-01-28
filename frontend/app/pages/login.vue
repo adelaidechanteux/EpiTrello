@@ -27,7 +27,7 @@ const handleLoginSuccess = async (response: CredentialResponse) => {
         console.error(error);
         toast.add({
             title: 'Error',
-            description: 'Failed to archive task.',
+            description: 'Failed to login.',
             color: 'error',
             ui: {
                 root: 'bg-[var(--secondary-grey)]',
