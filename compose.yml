@@ -1,0 +1,67 @@
+services:
+  backend_proxy:
+    build:
+      context: "backend/"
+      dockerfile: "Dockerfile.nginx"
+    ports:
+      - "5080:80"
+    depends_on:
+      - "backend"
+      - "frontend"
+  frontend:
+    build: frontend/
+    # ports:
+    #   - "3000:3000"
+  backend:
+    build: "backend/"
+    # ports:
+    #   - "5081:5081"
+    env_file:
+      - path: ./environment/postgres.env
+        required: true
+      - path: ./environment/variable.env
+        required: true
+      - path: ./environment/override.env
+        required: true
+      - path: ./environment/local.env # change to ./environment/external.env
+        required: true
+    depends_on:
+      - "database"
+      - "valkey"
+  # backend: # BACKEND TEST
+  #   build: "backend/"
+  #   ports:
+  #     - "5081:5081"
+  #   env_file:
+  #     - path: ./environment/variable.env
+  #       required: true
+  #     - path: ./environment/override.env
+  #       required: true
+  #     - path: ./environment/local.env
+  #       required: true
+  #   depends_on:
+  #     - "database"
+  #     - "valkey"
+  #   command: "bash /home/nonroot/entrypoint_test.sh"
+  #   restart: "no"
+  database:
+    image: "docker.io/postgres:18-trixie"
+    # ports:
+    #   - "5432:5432"
+    shm_size: "128mb"
+    env_file:
+      - path: ./environment/postgres.env
+        required: true
+    volumes:
+      - "dbdata:/var/lib/postgresql"
+  valkey:
+    image: "valkey/valkey:9.0.1-trixie"
+    # ports:
+    #   - "6379:6379"
+    volumes:
+      - "valkeydata:/data"
+    command: "valkey-server --save 60 1 --loglevel warning"
+
+volumes:
+  dbdata:
+  valkeydata:

@@ -1,0 +1,594 @@
+from uuid import UUID
+from django.http import HttpRequest
+from collections import OrderedDict
+from ninja import Router
+
+from myboard.models import Board, Task, TITLE_LENGTH, CATEGORY_LENGTH, COLOR_LENGTH
+from myboard.utils import send_email, send_websocket
+from myboard.schemas import *
+from myauth.models import User
+from myauth.api import AUTH_CHECKS
+
+router = Router(auth=AUTH_CHECKS, tags=["board"])
+
+OUTERROR_BoardDoesNotExists = (
+    404,
+    {"code": "BoardDoesNotExists", "message": "Board does not exists"},
+)
+OUTERROR_TaskDoesNotExists = (
+    404,
+    {"code": "TaskDoesNotExists", "message": "Task does not exists"},
+)
+OUTERROR_UserDoesNotExists = (
+    404,
+    {"code": "UserDoesNotExists", "message": "User does not exists"},
+)
+OUTERROR_MissingPermission = (
+    403,
+    {
+        "code": "MissingPermission",
+        "message": "Connected User has not enough permissions",
+    },
+)
+OUTERROR_BadValue = (
+    400,
+    {
+        "code": "BadValue",
+        "message": "Value in a body value item does not meet requirements",
+    },
+)
+OUTERROR_TaskIsInvalid = (
+    400,
+    {
+        "code": "TaskIsInvalid",
+        "message": "Task is not in the good state to be processed by this call",
+    },
+)
+
+
+@router.get(
+    "/get/board/{board_id}/",
+    response={200: OUTBoardSchema, 403: OUTError, 404: OUTError},
+)
+def get_board(request: HttpRequest, board_id: UUID):
+    try:
+        board = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        return OUTERROR_BoardDoesNotExists
+    try:
+        user = User.objects.get(pk=request.session["member_id"])
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    if not board.members.contains(user):
+        return OUTERROR_MissingPermission
+    return board
+
+
+@router.get("/boards/", response={200: OUTBoardsMinSchema})
+def board_member(request: HttpRequest):
+    try:
+        user = User.objects.get(pk=request.session["member_id"])
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    return {
+        "boards": user.board_set.all().distinct(),
+        "owned": user.board_owner_set.all().distinct(),
+        "admin": user.board_admin_set.all().distinct(),
+        "favorite": user.board_favorite_set.all().distinct(),
+    }
+
+
+@router.post(
+    "/invit/board/{board_id}/",
+    response={200: OUTOKSchema, 403: OUTError, 404: OUTError},
+)
+def invit_board(request: HttpRequest, board_id: UUID, body: InInvitBoardSchema):
+    try:
+        board = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        return OUTERROR_BoardDoesNotExists
+    try:
+        user: User = User.objects.get(pk=request.session["member_id"])
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    if not board.admin.contains(user):
+        return OUTERROR_MissingPermission
+    try:
+        target = User.objects.get(email=body.email)
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    board.members.add(target)
+    if body.admin:
+        board.admin.add(target)
+    send_websocket(
+        f"{board_id}",
+        "f_invit_board",
+        user.id,
+        {"admin": body.admin, "user": OUTMemberSchema.from_orm(target).dict()},
+    )
+    return {}
+
+
+@router.post(
+    "/create/board/", response={200: OUTBoardSchema, 400: OUTError, 404: OUTError}
+)
+def create_board(request: HttpRequest, body: InCreateBoardSchema):
+    try:
+        user: User = User.objects.get(pk=request.session["member_id"])
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    if len(body.title) >= TITLE_LENGTH:
+        return OUTERROR_BadValue
+    if len(body.color) >= COLOR_LENGTH:
+        return OUTERROR_BadValue
+    board = Board(title=body.title, owner=user, color=body.color)
+    board.save()
+    board.members.add(user)
+    board.admin.add(user)
+    user.nb_board += 1
+    user.save(update_fields=["nb_board"])
+    if user.nb_board == 1:
+        send_email(
+            "EpiTrello | Congrats on your First Board Created",
+            f"Well done on creating your first board {user.username}!",
+            to=[f"{user.email}"],
+        )
+    return board
+
+
+@router.put(
+    "/delete/board/{board_id}/",
+    response={200: OUTOKSchema, 403: OUTError, 404: OUTError},
+)
+def delete_board(request: HttpRequest, board_id: UUID):
+    try:
+        board: Board = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        return OUTERROR_BoardDoesNotExists
+    try:
+        user = User.objects.get(pk=request.session["member_id"])
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    if request.session["member_id"] != f"{board.owner.id}":
+        return OUTERROR_MissingPermission
+    board.delete()
+    send_websocket(f"{board_id}", "f_delete_board", user.id, {"id": f"{board_id}"})
+    return {}
+
+
+@router.post(
+    "create/task/{board_id}/",
+    response={200: OUTTaskSchema, 400: OUTError, 403: OUTError, 404: OUTError},
+)
+def create_task(request: HttpRequest, board_id: UUID, body: InCreateTask):
+    try:
+        board: Board = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        return OUTERROR_BoardDoesNotExists
+    try:
+        user: User = User.objects.get(pk=request.session["member_id"])
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    if not board.members.contains(user):
+        return OUTERROR_MissingPermission
+    if len(body.title) >= TITLE_LENGTH or len(body.category) >= CATEGORY_LENGTH:
+        return OUTERROR_BadValue
+    if body.color is not None and len(body.color) >= COLOR_LENGTH:
+        return OUTERROR_BadValue
+    if body.description is None:
+        body.description = ""
+    if body.assigned is not None:
+        try:
+            assigned = User.objects.get(email=body.assigned)
+        except User.DoesNotExist:
+            return OUTERROR_UserDoesNotExists
+        body.assigned = assigned
+    optional_arg = {}
+    for key in ("color", "date_start", "date_end", "assigned"):
+        if getattr(body, key) is not None:
+            optional_arg[key] = getattr(body, key)
+    task = Task(
+        title=body.title,
+        description=body.description,
+        category=body.category,
+        owner=user,
+        **optional_arg,
+    )
+    task.save()
+    board.tasks.add(task)
+    old_category = board.categories
+    new_category = list(OrderedDict.fromkeys(board.categories + [f"{task.category}"]))
+    if old_category != new_category:
+        board.categories = new_category
+        board.save(update_fields=["categories"])
+    send_websocket(
+        f"{board_id}",
+        "f_create_task",
+        user.id,
+        {
+            "task": OUTTaskSchema.from_orm(task).dict(),
+            "board_categories": new_category,
+        },
+    )
+    user.nb_task += 1
+    user.save(update_fields=["nb_task"])
+    if user.nb_task == 1:
+        send_email(
+            "EpiTrello | Congrats on your First Task Created",
+            f"Well done on creating your first task {user.username}!",
+            to=[f"{user.email}"],
+        )
+    return task
+
+
+@router.put(
+    "/delete/task/{board_id}/{task_id}/",
+    response={200: OUTOKSchema, 400: OUTError, 403: OUTError, 404: OUTError},
+)
+def delete_task(request: HttpRequest, board_id: UUID, task_id: UUID):
+    try:
+        board = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        return OUTERROR_BoardDoesNotExists
+    try:
+        task = Task.objects.get(pk=task_id)
+    except Task.DoesNotExist:
+        return OUTERROR_TaskDoesNotExists
+    try:
+        user = User.objects.get(pk=request.session["member_id"])
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    if not board.members.contains(user):
+        return OUTERROR_MissingPermission
+    if not board.tasks.contains(task):
+        return OUTERROR_TaskIsInvalid
+    board.tasks.remove(task)
+    board.archived.add(task)
+    send_websocket(
+        f"{board_id}",
+        "f_delete_task",
+        user.id,
+        {
+            "id": f"{task_id}",
+        },
+    )
+    return {}
+
+
+@router.put(
+    "/deleteforce/task/{board_id}/{task_id}/",
+    response={200: OUTOKSchema, 400: OUTError, 403: OUTError, 404: OUTError},
+)
+def deleteforce_task(request: HttpRequest, board_id: UUID, task_id: UUID):
+    try:
+        board: Board = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        return OUTERROR_BoardDoesNotExists
+    try:
+        task: Task = Task.objects.get(pk=task_id)
+    except Task.DoesNotExist:
+        return OUTERROR_TaskDoesNotExists
+    try:
+        user: User = User.objects.get(pk=request.session["member_id"])
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    if not board.admin.contains(user):
+        return OUTERROR_MissingPermission
+    if not board.archived.contains(task):
+        return OUTERROR_TaskIsInvalid
+    board.archived.remove(task)
+    task.delete()
+    send_websocket(
+        f"{board_id}",
+        "f_deleteforce_task",
+        user.id,
+        {
+            "id": f"{task_id}",
+        },
+    )
+    return {}
+
+
+@router.put(
+    "/restore/task/{board_id}/{task_id}/",
+    response={200: OUTOKSchema, 400: OUTError, 403: OUTError, 404: OUTError},
+)
+def restore_task(request: HttpRequest, board_id: UUID, task_id: UUID):
+    try:
+        board: Board = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        return OUTERROR_BoardDoesNotExists
+    try:
+        task: Task = Task.objects.get(pk=task_id)
+    except Task.DoesNotExist:
+        return OUTERROR_TaskDoesNotExists
+    try:
+        user = User.objects.get(pk=request.session["member_id"])
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    if not board.members.contains(user):
+        return OUTERROR_MissingPermission
+    if not board.archived.contains(task):
+        return OUTERROR_TaskIsInvalid
+    board.archived.remove(task)
+    board.tasks.add(task)
+    old_category = board.categories
+    new_category = list(OrderedDict.fromkeys(board.categories + [f"{task.category}"]))
+    if old_category != new_category:
+        board.categories = new_category
+        board.save(update_fields=["categories"])
+    send_websocket(
+        f"{board_id}",
+        "f_restore_task",
+        user.id,
+        {
+            "task": OUTTaskSchema.from_orm(task).dict(),
+            "board_categories": new_category,
+        },
+    )
+    return {}
+
+
+@router.put(
+    "/update/task/{board_id}/{task_id}/",
+    response={200: OUTTaskSchema, 403: OUTError, 404: OUTError},
+)
+def update_task(
+    request: HttpRequest, board_id: UUID, task_id: UUID, body: InUpdateTask
+):
+    try:
+        board: Board = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        return OUTERROR_BoardDoesNotExists
+    try:
+        task: Task = Task.objects.get(pk=task_id)
+    except Task.DoesNotExist:
+        return OUTERROR_TaskDoesNotExists
+    try:
+        user: User = User.objects.get(pk=request.session["member_id"])
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    if not board.members.contains(user):
+        return OUTERROR_MissingPermission
+    if body.title is not None and len(body.title) >= TITLE_LENGTH:
+        return OUTERROR_BadValue
+    if body.category is not None and len(body.category) >= CATEGORY_LENGTH:
+        return OUTERROR_BadValue
+    if body.color is not None and len(body.color) >= COLOR_LENGTH:
+        return OUTERROR_BadValue
+    if body.owner is not None:
+        try:
+            owner = User.objects.get(email=body.owner)
+        except User.DoesNotExist:
+            return OUTERROR_UserDoesNotExists
+        body.owner = owner
+    if body.assigned is not None:
+        try:
+            assigned = User.objects.get(email=body.assigned)
+        except User.DoesNotExist:
+            return OUTERROR_UserDoesNotExists
+        body.assigned = assigned
+    optional_arg: list[str] = []
+    for key in (
+        "title",
+        "description",
+        "color",
+        "category",
+        "date_start",
+        "date_end",
+        "owner",
+        "assigned",
+        "completed",
+    ):
+        if getattr(body, key) is not None:
+            setattr(task, key, getattr(body, key))
+            optional_arg.append(key)
+    if len(optional_arg) != 0:
+        task.save(update_fields=optional_arg)
+    if body.order is not None:
+        task.boardtasksthroughmodel_set.all().first().to(body.order)
+    task = Task.objects.get(pk=task.id)
+    old_category = board.categories
+    new_category = list(OrderedDict.fromkeys(board.categories + [f"{task.category}"]))
+    if old_category != new_category:
+        board.categories = new_category
+        board.save(update_fields=["categories"])
+    send_websocket(
+        f"{board_id}",
+        "f_update_task",
+        user.id,
+        {
+            "task": OUTTaskSchema.from_orm(task).dict(),
+            "board_categories": new_category,
+        },
+    )
+    return task
+
+
+@router.put(
+    "/update/board/{board_id}/",
+    response={200: OUTBoardSchema, 400: OUTError, 403: OUTError, 404: OUTError},
+)
+def update_board(request: HttpRequest, board_id: UUID, body: InUpdateBoard):
+    try:
+        board = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        return OUTERROR_BoardDoesNotExists
+    try:
+        user = User.objects.get(pk=request.session["member_id"])
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    if not board.members.contains(user):
+        return OUTERROR_MissingPermission
+    try:
+        target = None
+        if body.owner is not None:
+            target = User.objects.get(email=body.owner)
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    if body.owner is not None:
+        if f"{target.id}" != f"{board.owner.id}":
+            if request.session["member_id"] != f"{board.owner.id}":
+                return OUTERROR_MissingPermission
+        body.owner = target
+    if body.title is not None and len(body.title) >= TITLE_LENGTH:
+        return OUTERROR_BadValue
+    if body.color is not None and len(body.color) >= COLOR_LENGTH:
+        return OUTERROR_BadValue
+    optional_arg: list[str] = []
+    for key in ("title", "owner", "color"):
+        if getattr(body, key) is not None:
+            setattr(board, key, getattr(body, key))
+            optional_arg.append(key)
+    board.save(update_fields=optional_arg)
+    send_websocket(
+        f"{board_id}",
+        "f_update_board",
+        user.id,
+        {
+            "board_title": f"{board.title}",
+            "board_owner": OUTMemberSchema.from_orm(board.owner).dict(),
+            "board_color": f"{board.color}",
+        },
+    )
+    return board
+
+
+@router.put(
+    "/delete/member/{board_id}/",
+    response={200: OUTBoardSchema, 400: OUTError, 403: OUTError, 404: OUTError},
+)
+def delete_member(request: HttpRequest, board_id: UUID, body: InDeleteMember):
+    try:
+        board = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        return OUTERROR_BoardDoesNotExists
+    try:
+        user = User.objects.get(pk=request.session["member_id"])
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    try:
+        target = User.objects.get(email=body.email)
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    if not board.admin.contains(user):
+        return OUTERROR_MissingPermission
+    if f"{target.id}" == f"{board.owner.id}":
+        return OUTERROR_BadValue
+    if f"{user.id}" == f"{board.owner.id}":
+        board.members.remove(target)
+        board.admin.remove(target)
+        board.user_favorite.remove(target)
+        send_websocket(
+            f"{board_id}",
+            "f_delete_member",
+            user.id,
+            {
+                "id": f"{target.id}",
+            },
+        )
+        return board
+    if board.admin.contains(target):
+        return OUTERROR_MissingPermission
+    board.members.remove(target)
+    board.admin.remove(target)
+    board.user_favorite.remove(target)
+    send_websocket(
+        f"{board_id}",
+        "f_delete_member",
+        user.id,
+        {
+            "id": f"{target.id}",
+        },
+    )
+    return board
+
+
+@router.put(
+    "/update/categories/{board_id}/",
+    response={200: OUTBoardSchema, 400: OUTError, 403: OUTError, 404: OUTError},
+)
+def update_categories(request: HttpRequest, board_id: UUID, body: InUpdateCategory):
+    try:
+        board = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        return OUTERROR_BoardDoesNotExists
+    try:
+        user = User.objects.get(pk=request.session["member_id"])
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    if not board.members.contains(user):
+        return OUTERROR_MissingPermission
+    categories_present = set([f"{x.category}" for x in board.tasks.all()])
+    if not all([x in body.categories for x in categories_present]):
+        return OUTERROR_BadValue
+    board.categories = list(OrderedDict.fromkeys(body.categories))
+    board.save(update_fields=["categories"])
+    send_websocket(
+        f"{board_id}",
+        "f_update_categories",
+        user.id,
+        {
+            "categories": board.categories,
+        },
+    )
+    return board
+
+
+@router.put(
+    "/update/role/{board_id}/",
+    response={200: OUTOKSchema, 403: OUTError, 404: OUTError},
+)
+def update_role(request: HttpRequest, board_id: UUID, body: InUpdateRole):
+    try:
+        board = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        return OUTERROR_BoardDoesNotExists
+    try:
+        user = User.objects.get(pk=request.session["member_id"])
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    try:
+        target = User.objects.get(email=body.email)
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    if f"{board.owner.id}" != f"{user.id}":
+        return OUTERROR_MissingPermission
+    if f"{board.owner.id}" == f"{target.id}":
+        return OUTERROR_MissingPermission
+    if body.admin:
+        board.admin.add(target)
+    else:
+        board.admin.remove(target)
+    send_websocket(
+        f"{board_id}",
+        "f_update_role",
+        user.id,
+        {
+            "user": OUTMemberSchema.from_orm(target).dict(),
+            "admin": body.admin,
+        },
+    )
+    return {}
+
+
+@router.put(
+    "/update/favorite/{board_id}/",
+    response={200: OUTOKSchema, 403: OUTError, 404: OUTError},
+)
+def update_favorite(request: HttpRequest, board_id: UUID, body: InUpdateFavorite):
+    try:
+        board = Board.objects.get(pk=board_id)
+    except Board.DoesNotExist:
+        return OUTERROR_BoardDoesNotExists
+    try:
+        user = User.objects.get(pk=request.session["member_id"])
+    except User.DoesNotExist:
+        return OUTERROR_UserDoesNotExists
+    if not board.members.contains(user):
+        return OUTERROR_MissingPermission
+    if body.favorite:
+        board.user_favorite.add(user)
+    else:
+        board.user_favorite.remove(user)
+    return {}
