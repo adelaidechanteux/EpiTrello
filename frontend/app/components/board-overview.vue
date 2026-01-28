@@ -32,6 +32,7 @@ const emit = defineEmits<{
 const auth = useAuthStore()
 const { $bridge } = useNuxtApp()
 const api = $bridge
+const toast = useToast()
 
 async function toggleFavorite() {
   if (!auth.jwt) return
@@ -42,6 +43,14 @@ async function toggleFavorite() {
     emit('favorite-changed', !props.favorite)
   } catch (err) {
     console.error(err)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to add board to favorites.',
+      color: 'error',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
   }
 }
 </script>

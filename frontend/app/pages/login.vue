@@ -19,11 +19,20 @@ const api = $bridge;
 const { authenticateUser } = useAuthStore();
 const { authenticated } = storeToRefs(useAuthStore());
 const router = useRouter();
+const toast = useToast()
 
 const handleLoginSuccess = async (response: CredentialResponse) => {
     const { credential } = response;
     const data = await api.login(credential).catch((error) => {
         console.error(error);
+        toast.add({
+            title: 'Error',
+            description: 'Failed to archive task.',
+            color: 'error',
+            ui: {
+                root: 'bg-[var(--secondary-grey)]',
+            },
+            })
     });
 
     if (data) {
