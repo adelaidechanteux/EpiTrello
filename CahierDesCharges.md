@@ -33,11 +33,13 @@ tableau séparer en plusieurs catégories.
 - Un Github Project listant les tâches et etape à suivre. A completer suivant l'evolution du projet.
 - Le framework Django pour le back-end.
 - Le framework Nuxt pour le front-end.
+- Une base de donnée postgres pour les donnée persistantes.
+- Une base de donnée valkey (redis) pour les donnée non persistantes.
 
 ## Cibles
 
 - Les travailleurs seuls sur un projet, recherchant un outil d'organisation.
-- Les equipe voulant se repartir des tâches.
+- Les équipes voulant se repartir des tâches.
 - Les chefs de projet voulant un historique des tâches réalisés.
 
 ## Concurrences
@@ -53,7 +55,10 @@ Une interface épurée, rapide à comprendre, sans fonctionnalités superflues.
 
 ### Identité visuelle
 
-L’identité visuelle d’EpiTrello est volontairement sobre et moderne, afin demettre l’accent sur la lisibilité et l’efficacité.Le design privilégie un thème sombre, réduisant la fatigue visuelle etrenforçant la concentration lors de l’utilisation prolongée de l’outil.
+L’identité visuelle d’EpiTrello est volontairement sobre et moderne, afin demettre
+l’accent sur la lisibilité et l’efficacité.Le design privilégie un thème sombre,
+réduisant la fatigue visuelle etrenforçant la concentration lors de l’utilisation
+prolongée de l’outil.
 
 ### Logo
 
@@ -63,7 +68,8 @@ L’identité visuelle d’EpiTrello est volontairement sobre et moderne, afin d
 
 ### Couleurs
 
-La palette de couleurs est définie via des variables CSS afin d’assurer unecohérence globale et une maintenance simplifiée.
+La palette de couleurs est définie via des variables CSS afin d’assurer une
+cohérence globale et une maintenance simplifiée.
 
 Palette principale :
 
