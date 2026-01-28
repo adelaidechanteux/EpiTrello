@@ -24,6 +24,18 @@
           <UInput type="date" v-model="form.date_end" label="End date" class="w-1/2" :ui="{base: 'bg-[var(--secondary-grey)] rounded-sm'}"/>
         </div>
         <UInput v-model="form.assigned" placeholder="Assign to (email)" class="w-full" :ui="{base: 'bg-[var(--secondary-grey)] rounded-sm'}" />
+        <div class="flex items-center gap-4">
+          <UPopover :content="{align: 'center',side: 'right',sideOffset: 8}">
+            <UButton label="Choose color" color="neutral" variant="outline" :ui="{base: 'bg-[var(--secondary-grey)] rounded-sm hover:bg-(--ui-hover)'}">
+                <template #leading>
+                    <span :style="chip" class="size-3 rounded-full" />
+                </template>
+            </UButton>
+            <template #content>
+                <UColorPicker v-model="form.color"></UColorPicker>
+            </template>
+        </UPopover>
+        </div>
       </div>
       <div class="mt-4 flex justify-between">
         <UButton variant="ghost" color="secondary" @click="close">Cancel</UButton>
@@ -59,6 +71,7 @@ const form = reactive({
   date_end: toDateInput(props.task.date_end),
   assigned: typeof props.task.assigned === 'string' ? props.task.assigned : props.task.assigned?.email ?? ''
 })
+const chip = computed(() => ({ backgroundColor: form.color }))
 
 watch(
   () => props.task,
@@ -91,7 +104,7 @@ async function save() {
     const payload: Task = {
       ...form,
       description: form.description === "" ? null : form.description,
-      color: form.color === "" ? null : form.color,
+      color: form.color === "" ? undefined : form.color,
       date_start: toUtcSafeDate(form.date_start),
       date_end: toUtcSafeDate(form.date_end),
       assigned: form.assigned === "" ? null : form.assigned,

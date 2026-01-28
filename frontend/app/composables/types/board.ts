@@ -3,7 +3,7 @@ export interface Task {
     title: string
     description: string | null
     category: string
-    color: string | null
+    color: string | undefined
     date_start: string | null
     date_end: string | null
     assigned: any

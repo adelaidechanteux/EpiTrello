@@ -10,7 +10,7 @@
 
           <Draggable v-model="column.cards" item-key="id"  @end="onTaskReorder" group="cards" class="space-y-2 min-h-[40px]">
             <template #item="{ element }">
-              <div class="group relative bg-(--secondary-grey) rounded-lg p-2 text-sm shadow cursor-pointer border-2 border-(--secondary-grey) hover:border-info flex items-center gap-2 overflow-hidden" @click="openTask(element)">
+              <div class="group relative rounded-lg p-2 text-sm shadow cursor-pointer border-2 hover:border-info flex items-center gap-2 overflow-hidden" :style="{backgroundColor: element.color ?? 'var(--secondary-grey)', borderColor: element.color ?? 'var(--secondary-grey)' }" @click="openTask(element)">
                 <UIcon name="i-lucide-square-pen" class="absolute top-1 right-1 opacity-0 group-hover:opacity-100"/>
                 <span class="flex-1 flex flex-col transition-all">
                   <div class="mt-1 flex items-center gap-2 overflow-scroll">
@@ -128,7 +128,7 @@ async function addCard(column: Column) {
     title,
     description: '',
     category: column.id,
-    color: null,
+    color: '#29292c',
     date_start: null,
     date_end: null,
     assigned: null,
@@ -145,7 +145,7 @@ async function addCard(column: Column) {
       title,
       description: '',
       category: column.id,
-      color: null,
+      color: '#29292c',
       date_start: null,
       date_end: null,
       assigned: null,
