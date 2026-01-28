@@ -165,7 +165,7 @@
                 No archived tasks found
               </div>
               <div v-for="task in filteredArchivedTasks" :key="task.id">
-                <div class="group relative bg-(--secondary-grey) rounded-lg p-2 text-sm shadow cursor-pointer border-2 border-(--secondary-grey) hover:border-info flex items-center gap-2 overflow-hidden" @click="openArchivedTask(task)">
+                <div class="group relative rounded-lg p-2 text-sm shadow cursor-pointer border-2 hover:border-info flex items-center gap-2 overflow-hidden" :style="{backgroundColor: task.color ?? 'var(--secondary-grey)', borderColor: task.color ?? 'var(--secondary-grey)' }" @click="openArchivedTask(task)">
                   <UIcon name="i-lucide-square-pen" class="absolute top-1 right-1 opacity-0 group-hover:opacity-100"/>
                   <span class="flex-1 flex flex-col transition-all">
                     <div class="mt-1 flex items-center gap-2">
