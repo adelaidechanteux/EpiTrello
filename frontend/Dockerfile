@@ -1,4 +1,4 @@
-FROM node:lts-bookworm as builder
+FROM node:lts-bookworm AS builder
 
 WORKDIR /home/node/app
 COPY ./package*json .
