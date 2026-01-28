@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('myboard', '0005_userconnected_board_user_connected'),
+        ("myboard", "0005_userconnected_board_user_connected"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='task',
-            name='one_day_email_send',
+            model_name="task",
+            name="one_day_email_send",
             field=models.BooleanField(default=False),
         ),
     ]

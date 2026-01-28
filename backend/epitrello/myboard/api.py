@@ -9,18 +9,47 @@ from myboard.schemas import *
 from myauth.models import User
 from myauth.api import AUTH_CHECKS
 
-
 router = Router(auth=AUTH_CHECKS, tags=["board"])
 
-OUTERROR_BoardDoesNotExists = (404, {"code": "BoardDoesNotExists", "message": "Board does not exists"})
-OUTERROR_TaskDoesNotExists = (404, {"code": "TaskDoesNotExists", "message": "Task does not exists"})
-OUTERROR_UserDoesNotExists = (404, {"code": "UserDoesNotExists", "message": "User does not exists"})
-OUTERROR_MissingPermission = (403, {"code": "MissingPermission", "message": "Connected User has not enough permissions"})
-OUTERROR_BadValue = (400, {"code": "BadValue", "message": "Value in a body value item does not meet requirements"})
-OUTERROR_TaskIsInvalid = (400, {"code": "TaskIsInvalid", "message": "Task is not in the good state to be processed by this call"})
+OUTERROR_BoardDoesNotExists = (
+    404,
+    {"code": "BoardDoesNotExists", "message": "Board does not exists"},
+)
+OUTERROR_TaskDoesNotExists = (
+    404,
+    {"code": "TaskDoesNotExists", "message": "Task does not exists"},
+)
+OUTERROR_UserDoesNotExists = (
+    404,
+    {"code": "UserDoesNotExists", "message": "User does not exists"},
+)
+OUTERROR_MissingPermission = (
+    403,
+    {
+        "code": "MissingPermission",
+        "message": "Connected User has not enough permissions",
+    },
+)
+OUTERROR_BadValue = (
+    400,
+    {
+        "code": "BadValue",
+        "message": "Value in a body value item does not meet requirements",
+    },
+)
+OUTERROR_TaskIsInvalid = (
+    400,
+    {
+        "code": "TaskIsInvalid",
+        "message": "Task is not in the good state to be processed by this call",
+    },
+)
 
 
-@router.get("/get/board/{board_id}/", response={200: OUTBoardSchema, 403: OUTError, 404: OUTError})
+@router.get(
+    "/get/board/{board_id}/",
+    response={200: OUTBoardSchema, 403: OUTError, 404: OUTError},
+)
 def get_board(request: HttpRequest, board_id: UUID):
     try:
         board = Board.objects.get(pk=board_id)
@@ -33,8 +62,6 @@ def get_board(request: HttpRequest, board_id: UUID):
     if not board.members.contains(user):
         return OUTERROR_MissingPermission
     return board
-
-
 
 
 @router.get("/boards/", response={200: OUTBoardsMinSchema})
@@ -51,7 +78,10 @@ def board_member(request: HttpRequest):
     }
 
 
-@router.post("/invit/board/{board_id}/", response={200: OUTOKSchema, 403: OUTError, 404: OUTError})
+@router.post(
+    "/invit/board/{board_id}/",
+    response={200: OUTOKSchema, 403: OUTError, 404: OUTError},
+)
 def invit_board(request: HttpRequest, board_id: UUID, body: InInvitBoardSchema):
     try:
         board = Board.objects.get(pk=board_id)
@@ -70,14 +100,18 @@ def invit_board(request: HttpRequest, board_id: UUID, body: InInvitBoardSchema):
     board.members.add(target)
     if body.admin:
         board.admin.add(target)
-    send_websocket(f"{board_id}", "f_invit_board", user.id, {
-        "admin": body.admin,
-        "user": OUTMemberSchema.from_orm(target).dict()
-    })
+    send_websocket(
+        f"{board_id}",
+        "f_invit_board",
+        user.id,
+        {"admin": body.admin, "user": OUTMemberSchema.from_orm(target).dict()},
+    )
     return {}
 
 
-@router.post("/create/board/", response={200: OUTBoardSchema, 400: OUTError, 404: OUTError})
+@router.post(
+    "/create/board/", response={200: OUTBoardSchema, 400: OUTError, 404: OUTError}
+)
 def create_board(request: HttpRequest, body: InCreateBoardSchema):
     try:
         user: User = User.objects.get(pk=request.session["member_id"])
@@ -94,11 +128,18 @@ def create_board(request: HttpRequest, body: InCreateBoardSchema):
     user.nb_board += 1
     user.save(update_fields=["nb_board"])
     if user.nb_board == 1:
-        send_email("EpiTrello | Congrats on your First Board Created", f"Well done on creating your first board {user.username}!", to=[f"{user.email}"])
+        send_email(
+            "EpiTrello | Congrats on your First Board Created",
+            f"Well done on creating your first board {user.username}!",
+            to=[f"{user.email}"],
+        )
     return board
 
 
-@router.put("/delete/board/{board_id}/", response={200: OUTOKSchema, 403: OUTError, 404: OUTError})
+@router.put(
+    "/delete/board/{board_id}/",
+    response={200: OUTOKSchema, 403: OUTError, 404: OUTError},
+)
 def delete_board(request: HttpRequest, board_id: UUID):
     try:
         board: Board = Board.objects.get(pk=board_id)
@@ -111,14 +152,14 @@ def delete_board(request: HttpRequest, board_id: UUID):
     if request.session["member_id"] != f"{board.owner.id}":
         return OUTERROR_MissingPermission
     board.delete()
-    send_websocket(f"{board_id}", "f_delete_board", user.id, {
-        "id": f"{board_id}"
-    })
+    send_websocket(f"{board_id}", "f_delete_board", user.id, {"id": f"{board_id}"})
     return {}
 
 
-
-@router.post("create/task/{board_id}/", response={200: OUTTaskSchema, 400: OUTError, 403: OUTError,  404: OUTError})
+@router.post(
+    "create/task/{board_id}/",
+    response={200: OUTTaskSchema, 400: OUTError, 403: OUTError, 404: OUTError},
+)
 def create_task(request: HttpRequest, board_id: UUID, body: InCreateTask):
     try:
         board: Board = Board.objects.get(pk=board_id)
@@ -160,18 +201,30 @@ def create_task(request: HttpRequest, board_id: UUID, body: InCreateTask):
     if old_category != new_category:
         board.categories = new_category
         board.save(update_fields=["categories"])
-    send_websocket(f"{board_id}", "f_create_task", user.id, {
-        "task": OUTTaskSchema.from_orm(task).dict(),
-        "board_categories": new_category,
-    })
+    send_websocket(
+        f"{board_id}",
+        "f_create_task",
+        user.id,
+        {
+            "task": OUTTaskSchema.from_orm(task).dict(),
+            "board_categories": new_category,
+        },
+    )
     user.nb_task += 1
     user.save(update_fields=["nb_task"])
     if user.nb_task == 1:
-        send_email("EpiTrello | Congrats on your First Task Created", f"Well done on creating your first task {user.username}!", to=[f"{user.email}"])
+        send_email(
+            "EpiTrello | Congrats on your First Task Created",
+            f"Well done on creating your first task {user.username}!",
+            to=[f"{user.email}"],
+        )
     return task
 
 
-@router.put("/delete/task/{board_id}/{task_id}/", response={200: OUTOKSchema, 400: OUTError, 403: OUTError, 404: OUTError})
+@router.put(
+    "/delete/task/{board_id}/{task_id}/",
+    response={200: OUTOKSchema, 400: OUTError, 403: OUTError, 404: OUTError},
+)
 def delete_task(request: HttpRequest, board_id: UUID, task_id: UUID):
     try:
         board = Board.objects.get(pk=board_id)
@@ -191,13 +244,21 @@ def delete_task(request: HttpRequest, board_id: UUID, task_id: UUID):
         return OUTERROR_TaskIsInvalid
     board.tasks.remove(task)
     board.archived.add(task)
-    send_websocket(f"{board_id}", "f_delete_task", user.id, {
-        "id": f"{task_id}",
-    })
+    send_websocket(
+        f"{board_id}",
+        "f_delete_task",
+        user.id,
+        {
+            "id": f"{task_id}",
+        },
+    )
     return {}
 
 
-@router.put("/deleteforce/task/{board_id}/{task_id}/", response={200: OUTOKSchema, 400: OUTError, 403: OUTError, 404: OUTError})
+@router.put(
+    "/deleteforce/task/{board_id}/{task_id}/",
+    response={200: OUTOKSchema, 400: OUTError, 403: OUTError, 404: OUTError},
+)
 def deleteforce_task(request: HttpRequest, board_id: UUID, task_id: UUID):
     try:
         board: Board = Board.objects.get(pk=board_id)
@@ -217,13 +278,21 @@ def deleteforce_task(request: HttpRequest, board_id: UUID, task_id: UUID):
         return OUTERROR_TaskIsInvalid
     board.archived.remove(task)
     task.delete()
-    send_websocket(f"{board_id}", "f_deleteforce_task", user.id, {
-        "id": f"{task_id}",
-    })
+    send_websocket(
+        f"{board_id}",
+        "f_deleteforce_task",
+        user.id,
+        {
+            "id": f"{task_id}",
+        },
+    )
     return {}
 
 
-@router.put("/restore/task/{board_id}/{task_id}/", response={200: OUTOKSchema, 400: OUTError, 403: OUTError, 404: OUTError})
+@router.put(
+    "/restore/task/{board_id}/{task_id}/",
+    response={200: OUTOKSchema, 400: OUTError, 403: OUTError, 404: OUTError},
+)
 def restore_task(request: HttpRequest, board_id: UUID, task_id: UUID):
     try:
         board: Board = Board.objects.get(pk=board_id)
@@ -248,17 +317,25 @@ def restore_task(request: HttpRequest, board_id: UUID, task_id: UUID):
     if old_category != new_category:
         board.categories = new_category
         board.save(update_fields=["categories"])
-    send_websocket(f"{board_id}", "f_restore_task", user.id, {
+    send_websocket(
+        f"{board_id}",
+        "f_restore_task",
+        user.id,
+        {
             "task": OUTTaskSchema.from_orm(task).dict(),
             "board_categories": new_category,
-    })
+        },
+    )
     return {}
 
 
-
-
-@router.put("/update/task/{board_id}/{task_id}/", response={200: OUTTaskSchema, 403: OUTError, 404: OUTError})
-def update_task(request: HttpRequest, board_id: UUID, task_id: UUID, body: InUpdateTask):
+@router.put(
+    "/update/task/{board_id}/{task_id}/",
+    response={200: OUTTaskSchema, 403: OUTError, 404: OUTError},
+)
+def update_task(
+    request: HttpRequest, board_id: UUID, task_id: UUID, body: InUpdateTask
+):
     try:
         board: Board = Board.objects.get(pk=board_id)
     except Board.DoesNotExist:
@@ -292,7 +369,17 @@ def update_task(request: HttpRequest, board_id: UUID, task_id: UUID, body: InUpd
             return OUTERROR_UserDoesNotExists
         body.assigned = assigned
     optional_arg: list[str] = []
-    for key in ("title", "description", "color", "category", "date_start", "date_end", "owner", "assigned", "completed"):
+    for key in (
+        "title",
+        "description",
+        "color",
+        "category",
+        "date_start",
+        "date_end",
+        "owner",
+        "assigned",
+        "completed",
+    ):
         if getattr(body, key) is not None:
             setattr(task, key, getattr(body, key))
             optional_arg.append(key)
@@ -306,16 +393,22 @@ def update_task(request: HttpRequest, board_id: UUID, task_id: UUID, body: InUpd
     if old_category != new_category:
         board.categories = new_category
         board.save(update_fields=["categories"])
-    send_websocket(f"{board_id}", "f_update_task", user.id, {
-        "task": OUTTaskSchema.from_orm(task).dict(),
-        "board_categories": new_category,
-    })
+    send_websocket(
+        f"{board_id}",
+        "f_update_task",
+        user.id,
+        {
+            "task": OUTTaskSchema.from_orm(task).dict(),
+            "board_categories": new_category,
+        },
+    )
     return task
 
 
-
-
-@router.put("/update/board/{board_id}/", response={200: OUTBoardSchema, 400: OUTError, 403: OUTError, 404: OUTError})
+@router.put(
+    "/update/board/{board_id}/",
+    response={200: OUTBoardSchema, 400: OUTError, 403: OUTError, 404: OUTError},
+)
 def update_board(request: HttpRequest, board_id: UUID, body: InUpdateBoard):
     try:
         board = Board.objects.get(pk=board_id)
@@ -348,17 +441,23 @@ def update_board(request: HttpRequest, board_id: UUID, body: InUpdateBoard):
             setattr(board, key, getattr(body, key))
             optional_arg.append(key)
     board.save(update_fields=optional_arg)
-    send_websocket(f"{board_id}", "f_update_board", user.id, {
-        "board_title": f"{board.title}",
-        "board_owner": OUTMemberSchema.from_orm(board.owner).dict(),
-        "board_color": f"{board.color}",
-    })
+    send_websocket(
+        f"{board_id}",
+        "f_update_board",
+        user.id,
+        {
+            "board_title": f"{board.title}",
+            "board_owner": OUTMemberSchema.from_orm(board.owner).dict(),
+            "board_color": f"{board.color}",
+        },
+    )
     return board
 
 
-
-
-@router.put("/delete/member/{board_id}/", response={200: OUTBoardSchema, 400: OUTError, 403: OUTError, 404: OUTError})
+@router.put(
+    "/delete/member/{board_id}/",
+    response={200: OUTBoardSchema, 400: OUTError, 403: OUTError, 404: OUTError},
+)
 def delete_member(request: HttpRequest, board_id: UUID, body: InDeleteMember):
     try:
         board = Board.objects.get(pk=board_id)
@@ -380,24 +479,35 @@ def delete_member(request: HttpRequest, board_id: UUID, body: InDeleteMember):
         board.members.remove(target)
         board.admin.remove(target)
         board.user_favorite.remove(target)
-        send_websocket(f"{board_id}", "f_delete_member", user.id, {
-            "id": f"{target.id}",
-        })
+        send_websocket(
+            f"{board_id}",
+            "f_delete_member",
+            user.id,
+            {
+                "id": f"{target.id}",
+            },
+        )
         return board
     if board.admin.contains(target):
         return OUTERROR_MissingPermission
     board.members.remove(target)
     board.admin.remove(target)
     board.user_favorite.remove(target)
-    send_websocket(f"{board_id}", "f_delete_member", user.id, {
-        "id": f"{target.id}",
-    })
+    send_websocket(
+        f"{board_id}",
+        "f_delete_member",
+        user.id,
+        {
+            "id": f"{target.id}",
+        },
+    )
     return board
 
 
-
-
-@router.put("/update/categories/{board_id}/", response={200: OUTBoardSchema, 400: OUTError, 403: OUTError, 404: OUTError})
+@router.put(
+    "/update/categories/{board_id}/",
+    response={200: OUTBoardSchema, 400: OUTError, 403: OUTError, 404: OUTError},
+)
 def update_categories(request: HttpRequest, board_id: UUID, body: InUpdateCategory):
     try:
         board = Board.objects.get(pk=board_id)
@@ -414,15 +524,21 @@ def update_categories(request: HttpRequest, board_id: UUID, body: InUpdateCatego
         return OUTERROR_BadValue
     board.categories = list(OrderedDict.fromkeys(body.categories))
     board.save(update_fields=["categories"])
-    send_websocket(f"{board_id}", "f_update_categories", user.id, {
-        "categories": board.categories,
-    })
+    send_websocket(
+        f"{board_id}",
+        "f_update_categories",
+        user.id,
+        {
+            "categories": board.categories,
+        },
+    )
     return board
 
 
-
-
-@router.put("/update/role/{board_id}/", response={200: OUTOKSchema, 403: OUTError, 404: OUTError})
+@router.put(
+    "/update/role/{board_id}/",
+    response={200: OUTOKSchema, 403: OUTError, 404: OUTError},
+)
 def update_role(request: HttpRequest, board_id: UUID, body: InUpdateRole):
     try:
         board = Board.objects.get(pk=board_id)
@@ -444,15 +560,22 @@ def update_role(request: HttpRequest, board_id: UUID, body: InUpdateRole):
         board.admin.add(target)
     else:
         board.admin.remove(target)
-    send_websocket(f"{board_id}", "f_update_role", user.id, {
-        "user": OUTMemberSchema.from_orm(target).dict(),
-        "admin": body.admin,
-    })
+    send_websocket(
+        f"{board_id}",
+        "f_update_role",
+        user.id,
+        {
+            "user": OUTMemberSchema.from_orm(target).dict(),
+            "admin": body.admin,
+        },
+    )
     return {}
 
 
-
-@router.put("/update/favorite/{board_id}/", response={200: OUTOKSchema, 403: OUTError, 404: OUTError})
+@router.put(
+    "/update/favorite/{board_id}/",
+    response={200: OUTOKSchema, 403: OUTError, 404: OUTError},
+)
 def update_favorite(request: HttpRequest, board_id: UUID, body: InUpdateFavorite):
     try:
         board = Board.objects.get(pk=board_id)

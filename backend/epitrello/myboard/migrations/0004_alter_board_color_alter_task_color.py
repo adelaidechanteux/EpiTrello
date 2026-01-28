@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('myboard', '0003_board_color_alter_task_color'),
+        ("myboard", "0003_board_color_alter_task_color"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='board',
-            name='color',
-            field=models.CharField(default='#800080', max_length=8),
+            model_name="board",
+            name="color",
+            field=models.CharField(default="#800080", max_length=8),
         ),
         migrations.AlterField(
-            model_name='task',
-            name='color',
-            field=models.CharField(default='#800080', max_length=8),
+            model_name="task",
+            name="color",
+            field=models.CharField(default="#800080", max_length=8),
         ),
     ]

@@ -33,8 +33,10 @@ class AuthGoogleBearer(HttpBearer):
 AUTH_CHECKS = [AuthGoogleBearer()]
 
 if settings.ENVIRON == "test":
+
     class AuthTest(APIKeyHeader):
         param_name = "Authorization"
+
         @override
         def authenticate(self, request: HttpRequest, key: str | None):
             if key is None:
@@ -48,19 +50,24 @@ if settings.ENVIRON == "test":
                 return
             request.session["member_id"] = f"{m.id}"
             return m
+
     class AuthMinTest(AuthTest):
         param_name = "authorization"
+
     class AuthHttpTest(AuthTest):
         param_name = "Http-Authorization"
+
     AUTH_CHECKS.extend((AuthTest(), AuthMinTest(), AuthHttpTest()))
 
 router = Router(auth=AUTH_CHECKS, tags=["auth"])
+
 
 class OUTMemberSchema(Schema):
     id: UUID
     username: str
     profile_picture: str
     email: str
+
 
 @router.get("/user/login/", response={200: OUTMemberSchema})
 def user_login(request: HttpRequest):

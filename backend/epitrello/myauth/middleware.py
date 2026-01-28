@@ -1,6 +1,11 @@
 from hashlib import md5
 from myauth.models import User
-from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseForbidden,
+)
 from google.oauth2 import id_token as ggl_id_token
 from google.auth.transport import requests as ggl_requests
 from django.conf import settings
@@ -29,7 +34,9 @@ def check_google_auth(id_token: str) -> HttpResponseForbidden | User:
             content_type="plain/text",
         )
     try:
-        m = User.objects.get(authuserid__exact=user_id, authprovider__exact=authprovider)
+        m = User.objects.get(
+            authuserid__exact=user_id, authprovider__exact=authprovider
+        )
     except User.DoesNotExist:
         wargs = {}
         if user_picture is not None:
@@ -44,6 +51,7 @@ def check_google_auth(id_token: str) -> HttpResponseForbidden | User:
         m.save()
     return m
 
+
 def check_test_auth(id_token: str) -> HttpResponseForbidden | User:
     authprovider = "tst"
     if settings.ENVIRON != "test":
@@ -57,7 +65,9 @@ def check_test_auth(id_token: str) -> HttpResponseForbidden | User:
     user_id = md5(user_email.encode()).hexdigest()[:29]
     user_picture = None
     try:
-        m = User.objects.get(authuserid__exact=user_id, authprovider__exact=authprovider)
+        m = User.objects.get(
+            authuserid__exact=user_id, authprovider__exact=authprovider
+        )
     except User.DoesNotExist:
         wargs = {}
         if user_picture is not None:
