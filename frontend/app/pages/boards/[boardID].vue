@@ -27,19 +27,57 @@
                     <span class="text-sm font-medium">
                       {{ member.email }}
                     </span>
-                    <span class="text-xs opacity-70">
-                      {{ admins.some(a => a.email === member.email) ? 'Admin' : 'Member' }}
+                    <span v-if="member.email == boardOwnerEmail" class="text-xs opacity-70">
+                      Owner
+                    </span>
+                    <span v-else-if="admins.some(a => a.email === member.email)" class="text-xs opacity-70">
+                      Admin
+                    </span>
+                    <span v-else class="text-xs opacity-70">
+                      Member
                     </span>
                   </div>
                 </div>
-                <UModal v-model="confirmOpen" title="Remove member" description="Are you sure you want to remove this member from the board?" :ui="{ body: 'bg-[var(--secondary-grey)]', content: 'bg-[var(--secondary-grey)] ring-0 w-80', overlay: 'bg-[var(--ui-overlay)]', header: 'border-[var(--text-color)]', close: 'hover:bg-(--ui-hover)'}">
-                  <UButton v-if="member.email !== boardOwnerEmail" icon="i-lucide-x" size="xs" color="error" variant="ghost" @click="askRemoveMember(member.email)"/>
+                <div v-if="auth.user.email == boardOwnerEmail">
+                  <UModal v-model="confirmOpen" title="Remove member" description="Are you sure you want to remove this member from the board?" :ui="{ body: 'bg-[var(--secondary-grey)]', content: 'bg-[var(--secondary-grey)] ring-0 w-80', overlay: 'bg-[var(--ui-overlay)]', header: 'border-[var(--text-color)]', close: 'hover:bg-(--ui-hover)'}">
+                    <UButton v-if="member.email !== boardOwnerEmail" icon="i-lucide-x" size="xs" color="error" variant="ghost" @click="askRemoveMember(member.email)"/>
                     <template #body>
                       <div class="flex justify-center gap-2">
-                      <UButton color="error" @click="confirmRemoveMember"> Remove </UButton>
+                        <UButton color="error" @click="confirmRemoveMember"> Remove </UButton>
+                      </div>
+                    </template>
+                  </UModal>
+                </div>
+                <div v-else-if="admins.some(a => a.email === auth.user.email)">
+                  <UModal v-model="confirmOpen" title="Remove member" description="Are you sure you want to remove this member from the board?" :ui="{ body: 'bg-[var(--secondary-grey)]', content: 'bg-[var(--secondary-grey)] ring-0 w-80', overlay: 'bg-[var(--ui-overlay)]', header: 'border-[var(--text-color)]', close: 'hover:bg-(--ui-hover)'}">
+                    <div v-if="member.email === boardOwnerEmail"/>
+                    <div v-else-if="admins.find(a => a.email === member.email)">
+                      <UTooltip text="You do not have permission to remove users" :ui="{ content: 'bg-(--secondary-grey) text-color-(--fixed-text-color)' }">
+                        <UButton disabled icon="i-lucide-x" size="xs" color="error" variant="ghost" @click="askRemoveMember(member.email)"/>
+                      </UTooltip>
                     </div>
-                  </template>
-                </UModal>
+                    <div v-else>
+                        <UButton icon="i-lucide-x" size="xs" color="error" variant="ghost" @click="askRemoveMember(member.email)"/>
+                    </div>
+                      <template #body>
+                      <div class="flex justify-center gap-2">
+                        <UButton color="error" @click="confirmRemoveMember"> Remove </UButton>
+                      </div>
+                    </template>
+                  </UModal>
+                </div>
+                <div v-else>
+                  <UModal v-model="confirmOpen" title="Remove member" description="Are you sure you want to remove this member from the board?" :ui="{ body: 'bg-[var(--secondary-grey)]', content: 'bg-[var(--secondary-grey)] ring-0 w-80', overlay: 'bg-[var(--ui-overlay)]', header: 'border-[var(--text-color)]', close: 'hover:bg-(--ui-hover)'}">
+                    <UTooltip text="You do not have permission to remove users" :ui="{ content: 'bg-(--secondary-grey) text-color-(--fixed-text-color)' }">
+                      <UButton disabled v-if="member.email !== boardOwnerEmail" icon="i-lucide-x" size="xs" color="error" variant="ghost" @click="askRemoveMember(member.email)"/>
+                    </UTooltip>
+                    <template #body>
+                      <div class="flex justify-center gap-2">
+                        <UButton color="error" @click="confirmRemoveMember"> Remove </UButton>
+                      </div>
+                    </template>
+                  </UModal>
+                </div>
               </div>
             </div>
           </template>
@@ -47,7 +85,7 @@
         <UPopover :content="{side: 'bottom', sideOffset: 8 }" :ui="{content: 'bg-[var(--main-grey)] w-70 p-4'}">
           <UButton icon="i-lucide-ellipsis" color="secondary" variant="ghost"/>
           <template #content>
-            <div class="flex flex-col items-center gap-4">
+            <div v-if=" auth.user.email == boardOwnerEmail || admins.some(a => a.email === auth.user.email)" class="flex flex-col items-center gap-4">
               <UModal title="Change Board Color" :ui="{ body: 'bg-[var(--secondary-grey)] flex flex-col items-center justify-center gap-2', content: 'bg-[var(--secondary-grey)] ring-0 w-60', overlay: 'bg-[var(--ui-overlay)]', header: 'border-[var(--text-color)]', close: 'hover:bg-(--ui-hover)'}">
                 <UButton label="Open" color="secondary" variant="ghost" size="md" :ui="{ base: 'rounded-sm w-60 text-[var(--text-color)]'}">Board Color</UButton>
                 <template #body>
@@ -65,15 +103,47 @@
               </UModal>
 
               <UModal title="Delete Board" description="Are you sure you want to delete this board ?" :ui="{ body: 'bg-[var(--secondary-grey)] flex flex-col items-center justify-center gap-2', content: 'bg-[var(--secondary-grey)] ring-0 w-80', overlay: 'bg-[var(--ui-overlay)]', header: 'border-[var(--text-color)]', close: 'hover:bg-(--ui-hover)'}">
-                <UButton label="Open" color="secondary" variant="ghost" size="md" :ui="{ base: 'rounded-sm w-60 text-[var(--text-color)]'}">Delete Board</UButton>
-                <template #body v-if=" auth.user.email == boardOwnerEmail">
+                <UTooltip :text="auth.user.email == boardOwnerEmail? 'Delete this board' : 'You do not have permission to delete this board'" :ui="{ content: 'bg-(--secondary-grey) text-color-(--fixed-text-color)' }">
+                  <UButton :disabled="auth.user.email == boardOwnerEmail? false : true" label="Open" color="error" variant="ghost" size="md" :ui="{ base: 'rounded-sm w-60'}">Delete Board</UButton>
+                </UTooltip>
+                  <template #body>
                     <UButton size="md" color="error"  :ui="{base: 'text-[var(--ui-primary)]'}" @click.stop="deleteBoard()">Delete</UButton>
                   </template>
-                  <template #body v-else>
-                    <h2>You do not have the permission to delete this board</h2>
-                    <UButton size="md" color="error" disabled :ui="{base: 'text-[var(--ui-primary)] mt-4 disabled:opacity-50'}" @click.stop="deleteBoard()">Delete</UButton>
+              </UModal>
+            </div>
+            <div v-else>
+              <UModal title="Change Board Color" :ui="{ body: 'bg-[var(--secondary-grey)] flex flex-col items-center justify-center gap-2', content: 'bg-[var(--secondary-grey)] ring-0 w-60', overlay: 'bg-[var(--ui-overlay)]', header: 'border-[var(--text-color)]', close: 'hover:bg-(--ui-hover)'}">
+                <UTooltip text="You do not have permission to modify this board" :ui="{ content: 'bg-(--secondary-grey) text-color-(--fixed-text-color)' }">
+                  <UButton disabled label="Open" color="secondary" variant="ghost" size="md" :ui="{ base: 'rounded-sm w-60 text-[var(--text-color)]'}">Board Color</UButton>
+                </UTooltip>
+                <template #body>
+                  <UColorPicker v-model="color"></UColorPicker>
+                  <UButton size="md" color="secondary" variant="ghost" :ui="{base: 'text-[var(--text-color)]'}" @click.stop="updateBoardColor()">Change</UButton>
                 </template>
               </UModal>
+
+              <UModal title="Change Board Name" :ui="{ body: 'bg-[var(--secondary-grey)] flex flex-col items-center justify-center gap-2', content: 'bg-[var(--secondary-grey)] ring-0 w-60', overlay: 'bg-[var(--ui-overlay)]', header: 'border-[var(--text-color)]', close: 'hover:bg-(--ui-hover)'}">
+                <UTooltip text="You do not have permission to modify this board" :ui="{ content: 'bg-(--secondary-grey) text-color-(--fixed-text-color)' }">
+                  <UButton disabled label="Open" color="secondary" variant="ghost" size="md" :ui="{ base: 'rounded-sm w-60 text-[var(--text-color)]'}">Board Name</UButton>
+                </UTooltip>
+                  <template #body>
+                    <UInput v-model="NewBoardName" color="info" :ui="{ base: 'bg-[var(--secondary-grey)] border-[var(--text-color)]'}"/>
+                    <UButton size="md" color="secondary" variant="ghost" :ui="{base: 'text-[var(--text-color)]'}" @click.stop="updateBoardName()">Change</UButton>
+                  </template>
+                </UModal>
+
+                <UModal title="Delete Board" description="Are you sure you want to delete this board ?" :ui="{ body: 'bg-[var(--secondary-grey)] flex flex-col items-center justify-center gap-2', content: 'bg-[var(--secondary-grey)] ring-0 w-80', overlay: 'bg-[var(--ui-overlay)]', header: 'border-[var(--text-color)]', close: 'hover:bg-(--ui-hover)'}">
+                  <UTooltip text="You do not have permission to delete this board" :ui="{ content: 'bg-(--secondary-grey) text-color-(--fixed-text-color)' }">
+                    <UButton disabled label="Open" color="error" variant="ghost" size="md" :ui="{ base: 'rounded-sm w-60'}">Delete Board</UButton>
+                  </UTooltip>
+                  <template #body v-if=" auth.user.email == boardOwnerEmail">
+                      <UButton size="md" color="error"  :ui="{base: 'text-[var(--ui-primary)]'}" @click.stop="deleteBoard()">Delete</UButton>
+                    </template>
+                    <template #body v-else>
+                      <h2>You do not have the permission to delete this board</h2>
+                      <UButton size="md" color="error" disabled :ui="{base: 'text-[var(--ui-primary)] mt-4 disabled:opacity-50'}" @click.stop="deleteBoard()">Delete</UButton>
+                  </template>
+                </UModal>
             </div>
           </template>
         </UPopover>
@@ -125,7 +195,14 @@
                 </div>
                 <div class="flex gap-0 mt-1">
                   <UButton size="xs" color="info" variant="ghost" @click.stop="restoreTask(task)">Restore</UButton>
-                  <UButton size="xs" color="error" variant="ghost" @click.stop="deleteTask(task)">Delete</UButton>
+                  <div v-if=" auth.user.email == boardOwnerEmail || admins.some(a => a.email === auth.user.email)">
+                    <UButton size="xs" color="error" variant="ghost" @click.stop="deleteTask(task)">Delete</UButton>
+                  </div>
+                  <div v-else>
+                    <UTooltip text="You do not have permission to delete archives" :ui="{ content: 'bg-(--secondary-grey) text-color-(--fixed-text-color)' }">
+                      <UButton disabled size="xs" color="error" variant="ghost" @click.stop="deleteTask(task)">Delete</UButton>
+                    </UTooltip>
+                  </div>
                 </div>
               </div>
             </div>
@@ -238,6 +315,14 @@ async function invite() {
     shareOpen.value = false
   } catch (err) {
     console.error(err)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to invite user.',
+      color: 'error',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
   } finally {
     inviteLoading.value = false
     getBoardData()
@@ -257,8 +342,24 @@ async function confirmRemoveMember() {
     members.value = members.value.filter(
       m => m.email !== memberToRemove.value
     )
+    toast.add({
+      title: 'Info',
+      description: 'User removed successfully.',
+      color: 'info',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
   } catch (err) {
     console.error(err)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to remove user.',
+      color: 'error',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
   } finally {
     confirmOpen.value = false
     memberToRemove.value = null
@@ -300,6 +401,14 @@ async function updateBoardColor() {
     boardColor.value = color.value
   } catch (err) {
     console.error(err)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to change board color.',
+      color: 'error',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
   }
 }
 
@@ -331,6 +440,14 @@ async function restoreTask(task: Task) {
     await getBoardData()
   } catch (err) {
     console.error(err)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to restore task.',
+      color: 'error',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
   }
 }
 
@@ -347,6 +464,14 @@ async function updateBoardName() {
     boardName.value = NewBoardName.value
   } catch (err) {
     console.error(err)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to rename board.',
+      color: 'error',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
   }
 }
 
@@ -359,6 +484,14 @@ async function deleteTask(task: Task) {
     archivedTasks.value = archivedTasks.value.filter(t => t.id !== task.id)
   } catch (err) {
     console.error(err)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to delete archive.',
+      color: 'error',
+      ui: {
+        root: 'bg-[var(--secondary-grey)]',
+      },
+    })
   }
 }
 
