@@ -25,7 +25,7 @@ tableau séparer en plusieurs catégories.
 ### Périmètre
 
 - deux developpeurs à raison de trois jours par semaine.
-- Commencant le 19 octobre 2025
+- Commencant le 29 octobre 2025
 - Finissant le 28 janvier 2026.
 
 ### Eléments existants
@@ -38,7 +38,7 @@ tableau séparer en plusieurs catégories.
 
 - Les travailleurs seuls sur un projet, recherchant un outil d'organisation.
 - Les equipe voulant se repartir des tâches.
-- Les chefs de projet voulant un historique des tâches réalise.
+- Les chefs de projet voulant un historique des tâches réalisés.
 
 ## Concurrences
 
@@ -46,13 +46,49 @@ tableau séparer en plusieurs catégories.
 2. Jira. Complet, mais très difficile à prendre en mains.
 3. Github Project, plus specialisé sur le developpement informatique.
 
-Notre force: une interface simple, sans prise de tête, et facile à prendre en main.
+Avantage concurrentiel d’EpiTrello :
+Une interface épurée, rapide à comprendre, sans fonctionnalités superflues.
 
 ## Charte graphique
 
-1. Logo:
-2. Couleurs:
-3. Typographie:
+### Identité visuelle
+
+L’identité visuelle d’EpiTrello est volontairement sobre et moderne, afin demettre l’accent sur la lisibilité et l’efficacité.Le design privilégie un thème sombre, réduisant la fatigue visuelle etrenforçant la concentration lors de l’utilisation prolongée de l’outil.
+
+### Logo
+
+*   Le logo utilisé est celui de Trello, choisi comme référence visuelle.
+
+*   Il permet une identification immédiate du concept de tableau de tâches.
+
+### Couleurs
+
+La palette de couleurs est définie via des variables CSS afin d’assurer unecohérence globale et une maintenance simplifiée.
+
+Palette principale :
+
+*   **Principal** : Gris foncéUtilisé pour le fond principal de l’application.
+
+*   **Secondaire** : Gris clairUtilisé pour les éléments secondaires (cartes, conteneurs).
+
+*   **Texte** : Gris très clairGarantit une bonne lisibilité sur fond sombre.
+
+*   **Tercière**: NoirUtilisé pour les contrastes forts et certains éléments spécifiques
+
+
+### Typographie
+
+La typographie choisie vise la clarté, la sobriété et la compatibilitémulti-plateforme.
+
+Polices utilisées :
+
+*   **Liberation Sans**
+
+*   **Noto Sans**
+
+    *   Noto Sans Regular
+
+    *   Noto Sans Medium
 
 ## Délais de réalisation
 
@@ -105,6 +141,32 @@ Notre force: une interface simple, sans prise de tête, et facile à prendre en 
 10. Personnalisation des tableaux
 
 > Sur la Page Tableau, Modifier la couleur du tableau.
+
+11. Modification des tableaux
+
+> Sur la Page Tableau, Modifier le nom du tableau.
+
+12. Archivage de tâches
+
+> Sur la Page Tableau, seléctionner une tâche. Archiver la tâche
+
+13. Visualiser les tâches archivées
+
+> Sur la Page Tableau, cliquer sur le bouton des archives
+
+14. Restorer une tâche archivée
+
+> Sur la Page Tableau, cliquer sur le bouton des archives
+> Cliquer sur le bouton Restorer de la tâche associée
+
+15. Supprimer une tâche archivée
+
+> Sur la Page Tableau, cliquer sur le bouton des archives
+> Cliquer sur le bouton Supprimer de la tâche associée
+
+16. Inviter un collaborateur
+
+> Sur la Page Tableau, inviter un collaborateur en inscrivant son adresse mail, possibilité de donner les droits d'administrateur
 
 ## Spécifications fonctionnelles (detaillees)
 
@@ -173,7 +235,7 @@ __Objectif__: Collaboration en temps réel entre plusieurs utilisateurs.
 __Preconditions__:
     1. Les utilisateurs sont connectes.
     2. Un tableau a été créé.
-    3. Le crrateur du tableau a invité l'autre sur son tableau.
+    3. Le créateur du tableau a invité l'autre sur son tableau.
     4. Un utilisateur a créer une catégorie
 __Etape a suivre__:
     1. Les deux utilisateurs doivent ouvrir la Page du même tableau.
@@ -186,8 +248,8 @@ __Objectif__: Modifier une tâche.
 __Preconditions__:
     1. L'utilisateur est connecte.
     2. L'utilisateur a créé un tableau.
-    3. L'utilisateur a créé une tâche.
-    4. L'utilisateur a créé une catégorie.
+    3. L'utilisateur a créé une catégorie.
+    4. L'utilisateur a créé une tâche.
 __Etape a suivre__:
     1. Ouvrir la Page du Tableau.
     2. Cliquer sur la tâche déjà créer.
@@ -216,8 +278,8 @@ __Objectif__: Changer la couleur de fond de la tâche.
 __Preconditions__:
     1. L'utilisateur est connecte.
     2. L'utilisateur a créé un tableau.
-    4. L'utilisateur a créé une catégories.
-    3. L'utilisateur a créé une tâche.
+    3. L'utilisateur a créé une catégorie.
+    4. L'utilisateur a créé une tâche.
 __Etape a suivre__:
     1. Ouvrir la Page du Tableau.
     2. Cliquer sur la tâche déjà créer.
@@ -238,12 +300,111 @@ __Etape a suivre__:
     4. Valider la modification.
 __Resultat__: Voir le changement de couleur.
 
+11. Modification des tableaux
+
+__Objectif__: Changer le nom du tableau.
+__Preconditions__:
+    1. L'utilisateur est connecte.
+    2. L'utilisateur a créé un tableau.
+__Etape a suivre__:
+    1. Ouvrir la Page du Tableau.
+    2. Cliquer sur les paramètre du tableau.
+    3. Modifier le nom du tableau.
+    4. Valider la modification.
+__Resultat__: Voir le changement du nom.
+
+12. Archivage de tâches
+
+__Objectif__: Archiver une tâche.
+__Preconditions__:
+    1. L'utilisateur est connecte.
+    2. L'utilisateur a créé un tableau.
+    3. L'utilisateur a créé une catégorie.
+    4. L'utilisateur a créé une tâche.
+__Etape a suivre__:
+    1. Ouvrir la Page du Tableau.
+    2. Cliquer sur la tâche déjà créer.
+    3. Cliquer sur le bouton "Archiver" de la tâche.
+__Resultat__: La tâche a été archiver et n'est plus visible sur le tableau.
+
+13. Visualiser les tâches archivées
+
+__Objectif__: Visualiser les tâches archivées.
+__Preconditions__:
+    1. L'utilisateur est connecte.
+    2. L'utilisateur a créé un tableau.
+    3. L'utilisateur a créé une catégorie.
+    4. L'utilisateur a créé une tâche.
+    5. L'utilisateur a archivé une tâche.
+__Etape a suivre__:
+    1. Ouvrir la Page du Tableau.
+    2. Cliquer sur le bonton des archives.
+__Resultat__: L'utilisateur peut visualiser toutes les tâches archivées.
+
+14. Restorer une tâche archivée
+
+__Objectif__: Restorer une tâche archivée.
+__Preconditions__:
+    1. L'utilisateur est connecte.
+    2. L'utilisateur a créé un tableau.
+    3. L'utilisateur a créé une catégorie.
+    4. L'utilisateur a créé une tâche.
+    5. L'utilisateur a archivé une tâche.
+__Etape a suivre__:
+    1. Ouvrir la Page du Tableau.
+    2. Cliquer sur le bonton des archives.
+    3. Cliquer sur le bouton de restauration de la tâche associée
+__Resultat__: La tâche est restaurée sur le tableau et n'est plus dans les archives.
+
+15. Supprimer un tâche archivée
+
+__Objectif__: Restorer une tâche archivée.
+__Preconditions__:
+    1. L'utilisateur est connecte.
+    2. L'utilisateur a créé un tableau.
+    3. L'utilisateur a créé une catégorie.
+    4. L'utilisateur a créé une tâche.
+    5. L'utilisateur a archivé une tâche.
+__Etape a suivre__:
+    1. Ouvrir la Page du Tableau.
+    2. Cliquer sur le bonton des archives.
+    3. Cliquer sur le bouton de suppression de la tâche associée
+__Resultat__: La tâche est supprimée des archives.
+
+16. Inviter un collaborateur
+
+__Objectif__: Inviter un collaborateur à participer à un tableau.
+__Preconditions__:
+    1. L'utilisateur est connecte.
+    2. L'utilisateur a créé un tableau.
+    3. Le collaborateur à inviter possède un compte EpiTrello
+__Etape a suivre__:
+    1. Ouvrir la Page du Tableau.
+    2. Cliquer sur le bonton Partager.
+    3. Inscrire le mail du collaborateur à inviter
+    4. Choisir si le collaborateur à les permission d'administrateur du tableau
+    5. Valider le formulaire
+__Resultat__: Le collaborateur peut participer à l'édition du tableau selon les permissions données.
+
+
 ## Spécifications techniques
 
-- Authentification utilisant le SSO de Google.
-- Le back-end doit être developpé en utilisant le framework Django.
-- L'API du back-end doit utiliser la librairie Django-Ninja.
-- Le front-end doit être developpé en utilisant le framework Nuxt.
+- Authentification utilisant le SSO de Google :
+    *   Authentification rapide et sécurisée, sans création manuelle de mot de passe.
+    *   Réduction des risques liés à la gestion d'identifiants.
+    *   Simplification de l'expérience utilisateur
+- Le back-end doit être développé en utilisant le framework Django :
+    *   Framework robuste, sécurité intégrée et structure claire.
+- L'API du back-end doit utiliser la librairie Django-Ninja:
+    *   Développement d'API REST performante et typée sur les standards OpenAPI.
+    *   Facilitation de validation de données et de génération de documentation.
+- Le front-end doit être développé en utilisant le framework Nuxt:
+    *   Création d'application web moderne et performante.
+    *   Organisation du code claire et bonne gestion du routage.
+    *   Adapté au projet de petite et moyenne taille.
+- Le front-end sera complété par la librairie NuxtUI:
+    *   Accélération du développement d'interface.
+    *   Garantit une cohérence visuelle moderne.
 
 ## Annexes
 
