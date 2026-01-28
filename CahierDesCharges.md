@@ -98,7 +98,7 @@ Polices utilisées :
 
 ## Délais de réalisation
 
-1. version 1.0: 28 février.
+1. version 1.0: 28 janvier.
 
 ## Spécifications fonctionnelles
 
