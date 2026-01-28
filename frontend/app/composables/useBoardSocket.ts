@@ -1,7 +1,7 @@
 import { ref, onBeforeUnmount } from 'vue'
 import { useAuthStore } from '~/store/auth'
 
-export function useBoardSocket(boardID: string) {
+export function useBoardSocket(boardID: string, uri: string) {
     const socket = ref<WebSocket | null>(null)
     const connected = ref(false)
     const auth = useAuthStore()
@@ -10,7 +10,7 @@ export function useBoardSocket(boardID: string) {
         if (!boardID || !auth.jwt) return
 
         socket.value = new WebSocket(
-            `ws://localhost:5080/ws/board/${boardID}/`
+            `ws://${uri}/ws/board/${boardID}/`
         )
 
         socket.value.onopen = () => {
